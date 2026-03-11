@@ -11,7 +11,7 @@ const ProductList = () => {
 
   useEffect(() => {
     const fetchProducts = async () => {
-      const res = await fetch("API_BASE_URL/api/products");
+      const res = await fetch(`${API_BASE_URL}/api/products`);
       const data = await res.json();
       setProducts(data);
 
@@ -30,7 +30,7 @@ const ProductList = () => {
 
     const qty = quantities[productId] || 1;
 
-    await fetch("API_BASE_URL/api/cart", {
+    await fetch(`${API_BASE_URL}/api/cart`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

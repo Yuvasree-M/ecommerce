@@ -8,7 +8,7 @@ const Transaction = () => {
 
   const fetchUsers = async () => {
     try {
-      const res = await fetch("API_BASE_URL/api/users", {
+      const res = await fetch(`${API_BASE_URL}/api/users`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
@@ -21,7 +21,7 @@ const Transaction = () => {
 
   const fetchTransactions = async () => {
     try {
-      const res = await fetch("API_BASE_URL/api/transactions", {
+      const res = await fetch(`${API_BASE_URL}/api/transactions`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) throw new Error("Failed to fetch transactions");

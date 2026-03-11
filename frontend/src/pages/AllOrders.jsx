@@ -10,7 +10,7 @@ const AllOrders = () => {
 
   const fetchOrders = async () => {
     try {
-      const res = await fetch("API_BASE_URL/api/orders/all", {
+      const res = await fetch(`${API_BASE_URL}/api/orders/all`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) throw new Error("Failed to fetch orders");

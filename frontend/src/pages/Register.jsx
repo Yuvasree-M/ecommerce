@@ -72,7 +72,7 @@ const Register = () => {
       const uid = userCredential.user.uid;
 
       // Send user data to backend
-      await fetch("API_BASE_URL/api/users/register", {
+      await fetch(`${API_BASE_URL}/api/users/register`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json"

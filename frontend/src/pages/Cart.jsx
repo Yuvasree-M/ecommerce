@@ -9,7 +9,7 @@ const Cart = () => {
   const navigate = useNavigate();
 
   const handleRemove = async (id) => {
-    await fetch(`API_BASE_URL/api/cart/${id}`, {
+    await fetch(`${API_BASE_URL}/api/cart/${id}`, {
       method: "DELETE",
       headers: { Authorization: `Bearer ${token}` },
     });
@@ -18,7 +18,7 @@ const Cart = () => {
 
   const updateQuantity = async (id, quantity) => {
     if (quantity < 1) return;
-    await fetch(`API_BASE_URL/api/cart`, {
+    await fetch(`${API_BASE_URL}/api/cart`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

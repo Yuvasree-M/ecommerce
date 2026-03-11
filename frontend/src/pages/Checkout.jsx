@@ -24,7 +24,7 @@ const API_BASE_URL = import.meta.env.VITE_API_URL;
     const fetchProfile = async () => {
 
       const res = await fetch(
-        "API_BASE_URL/api/users/profile",
+        `${API_BASE_URL}/api/users/profile`,
         {
           headers: { Authorization: `Bearer ${token}` }
         }
@@ -87,7 +87,7 @@ const API_BASE_URL = import.meta.env.VITE_API_URL;
     try {
 
       const res = await fetch(
-        "API_BASE_URL/api/payment/create-order",
+        `${API_BASE_URL}/api/payment/create-order`,
         {
           method: "POST",
           headers: {
@@ -113,7 +113,7 @@ const API_BASE_URL = import.meta.env.VITE_API_URL;
         handler: async (response) => {
 
           const orderRes = await fetch(
-            "API_BASE_URL/api/orders/place-order",
+            `${API_BASE_URL}/api/orders/place-order`,
             {
               method: "POST",
               headers: {

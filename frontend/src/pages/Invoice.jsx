@@ -14,7 +14,7 @@ const Invoice = () => {
     const fetchOrder = async () => {
 
       const res = await fetch(
-        "API_BASE_URL/api/orders",
+        `${API_BASE_URL}/api/orders`,
         {
           headers: {
             Authorization: `Bearer ${token}`
@@ -41,7 +41,7 @@ const Invoice = () => {
   const downloadInvoice = () => {
 
     window.open(
-      `API_BASE_URL/api/invoice/${id}`,
+      `${API_BASE_URL}/api/invoice/${id}`,
       "_blank"
     );
 

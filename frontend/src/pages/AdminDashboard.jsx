@@ -18,7 +18,7 @@ const AdminDashboard = () => {
   /* ---------------- FETCH USERS ---------------- */
 const API_BASE_URL = import.meta.env.VITE_API_URL;
   const fetchUsers = async () => {
-    const res = await fetch("API_BASE_URL/api/users", {
+    const res = await fetch(`${API_BASE_URL}/api/users`, {
       headers: { Authorization: `Bearer ${token}` },
     });
 
@@ -32,7 +32,7 @@ const API_BASE_URL = import.meta.env.VITE_API_URL;
   /* ---------------- FETCH ORDERS ---------------- */
 
   const fetchOrders = async () => {
-    const res = await fetch("API_BASE_URL/api/orders/all", {
+    const res = await fetch(`${API_BASE_URL}/api/orders/all`, {
       headers: { Authorization: `Bearer ${token}` },
     });
 
@@ -50,7 +50,7 @@ const API_BASE_URL = import.meta.env.VITE_API_URL;
   /* ---------------- FETCH PRODUCTS ---------------- */
 
   const fetchProducts = async () => {
-    const res = await fetch("API_BASE_URL/api/products", {
+    const res = await fetch(`${API_BASE_URL}/api/products`, {
       headers: { Authorization: `Bearer ${token}` },
     });
 
@@ -61,7 +61,7 @@ const API_BASE_URL = import.meta.env.VITE_API_URL;
   /* ---------------- FETCH TRANSACTIONS ---------------- */
 
   const fetchTransactions = async () => {
-    const res = await fetch("API_BASE_URL/api/transactions", {
+    const res = await fetch(`${API_BASE_URL}/api/transactions`, {
       headers: { Authorization: `Bearer ${token}` },
     });
 
@@ -74,7 +74,7 @@ const API_BASE_URL = import.meta.env.VITE_API_URL;
   const updateStatus = async (orderId, status) => {
     setUpdatingOrderId(orderId);
 
-    await fetch(`API_BASE_URL/api/orders/${orderId}/status`, {
+    await fetch(`${API_BASE_URL}/api/orders/${orderId}/status`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
