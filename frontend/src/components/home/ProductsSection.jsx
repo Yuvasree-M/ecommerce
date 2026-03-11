@@ -2,7 +2,7 @@ import { useEffect, useState, useContext } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../../context/AuthContext";
-
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 const ProductsSection = () => {
   const [products, setProducts] = useState([]);
   const { user } = useContext(AuthContext);
@@ -17,7 +17,7 @@ const ProductsSection = () => {
 
   const fetchProducts = async () => {
     try {
-      const res = await axios.get("http://localhost:5000/api/products");
+      const res = await axios.get("API_BASE_URL/api/products");
       setProducts(res.data);
     } catch (err) {
       console.error(err);

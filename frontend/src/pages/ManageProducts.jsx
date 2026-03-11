@@ -1,6 +1,6 @@
 import { useState, useEffect, useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
-
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 const ManageProducts = () => {
   const { token } = useContext(AuthContext);
 
@@ -19,7 +19,7 @@ const ManageProducts = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   const fetchProducts = async () => {
-    const res = await fetch("http://localhost:5000/api/products");
+    const res = await fetch("API_BASE_URL/api/products");
     const data = await res.json();
     setProducts(data);
   };
@@ -51,8 +51,8 @@ const ManageProducts = () => {
     if (imageFile) formData.append("image", imageFile);
 
     const url = editingId
-      ? `http://localhost:5000/api/products/${editingId}`
-      : "http://localhost:5000/api/products";
+      ? `API_BASE_URL/api/products/${editingId}`
+      : "API_BASE_URL/api/products";
 
     const method = editingId ? "PUT" : "POST";
 
@@ -82,7 +82,7 @@ const ManageProducts = () => {
   };
 
   const handleDelete = async () => {
-    const res = await fetch(`http://localhost:5000/api/products/${deleteId}`, {
+    const res = await fetch(`API_BASE_URL/api/products/${deleteId}`, {
       method: "DELETE",
       headers: { Authorization: `Bearer ${token}` },
     });

@@ -1,6 +1,6 @@
 import { useEffect, useState, useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
-
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 const Orders = () => {
   const { token } = useContext(AuthContext);
   const [orders, setOrders] = useState([]);
@@ -9,7 +9,7 @@ const Orders = () => {
     const fetchOrders = async () => {
       try {
         console.log("Fetching orders with token:", token);
-        const res = await fetch("http://localhost:5000/api/orders", {
+        const res = await fetch("API_BASE_URL/api/orders", {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (!res.ok) throw new Error(`Failed to fetch orders: ${res.status}`);
@@ -26,7 +26,7 @@ const Orders = () => {
   // const handleClearOrders = async () => {
   //   if (!window.confirm("Are you sure you want to clear all orders?")) return;
 
-  //   await fetch("http://localhost:5000/api/orders/clear", {
+  //   await fetch("API_BASE_URL/api/orders/clear", {
   //     method: "DELETE",
   //     headers: { Authorization: `Bearer ${token}` },
   //   });

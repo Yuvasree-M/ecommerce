@@ -1,6 +1,6 @@
 import { useEffect, useState, useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
-
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 const Transaction = () => {
   const { token } = useContext(AuthContext);
   const [transactions, setTransactions] = useState([]);
@@ -8,7 +8,7 @@ const Transaction = () => {
 
   const fetchUsers = async () => {
     try {
-      const res = await fetch("http://localhost:5000/api/users", {
+      const res = await fetch("API_BASE_URL/api/users", {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
@@ -21,7 +21,7 @@ const Transaction = () => {
 
   const fetchTransactions = async () => {
     try {
-      const res = await fetch("http://localhost:5000/api/transactions", {
+      const res = await fetch("API_BASE_URL/api/transactions", {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) throw new Error("Failed to fetch transactions");

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { FaUser, FaEnvelope, FaCommentDots } from "react-icons/fa";
 import { toast } from "react-toastify";
 import { ClipLoader } from "react-spinners"; // react-spinners package
-
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 const Contact = () => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");

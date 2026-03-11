@@ -4,7 +4,7 @@ import { auth } from "../firebase";
 import { useNavigate, Link } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import { FaEnvelope, FaLock, FaEye, FaEyeSlash } from "react-icons/fa";
-
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 const Login = () => {
 
   const [email, setEmail] = useState("");

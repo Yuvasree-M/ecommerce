@@ -2,14 +2,14 @@ import { useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import { CartContext } from "../context/CartContext";
-
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 const Cart = () => {
   const { token } = useContext(AuthContext);
   const { cart, fetchCart } = useContext(CartContext);
   const navigate = useNavigate();
 
   const handleRemove = async (id) => {
-    await fetch(`http://localhost:5000/api/cart/${id}`, {
+    await fetch(`API_BASE_URL/api/cart/${id}`, {
       method: "DELETE",
       headers: { Authorization: `Bearer ${token}` },
     });
@@ -18,7 +18,7 @@ const Cart = () => {
 
   const updateQuantity = async (id, quantity) => {
     if (quantity < 1) return;
-    await fetch(`http://localhost:5000/api/cart`, {
+    await fetch(`API_BASE_URL/api/cart`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

@@ -17,14 +17,14 @@ const Checkout = () => {
     (sum, item) => sum + item.price * item.quantity,
     0
   );
-
+const API_BASE_URL = import.meta.env.VITE_API_URL;
   // Auto fill address + phone
   useEffect(() => {
 
     const fetchProfile = async () => {
 
       const res = await fetch(
-        "http://localhost:5000/api/users/profile",
+        "API_BASE_URL/api/users/profile",
         {
           headers: { Authorization: `Bearer ${token}` }
         }
@@ -87,7 +87,7 @@ const Checkout = () => {
     try {
 
       const res = await fetch(
-        "http://localhost:5000/api/payment/create-order",
+        "API_BASE_URL/api/payment/create-order",
         {
           method: "POST",
           headers: {
@@ -113,7 +113,7 @@ const Checkout = () => {
         handler: async (response) => {
 
           const orderRes = await fetch(
-            "http://localhost:5000/api/orders/place-order",
+            "API_BASE_URL/api/orders/place-order",
             {
               method: "POST",
               headers: {

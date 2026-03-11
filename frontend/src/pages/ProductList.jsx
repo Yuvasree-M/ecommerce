@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
 import { CartContext } from "../context/CartContext";
-
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 const ProductList = () => {
   const [products, setProducts] = useState([]);
   const [quantities, setQuantities] = useState({}); // track quantity per product
@@ -11,7 +11,7 @@ const ProductList = () => {
 
   useEffect(() => {
     const fetchProducts = async () => {
-      const res = await fetch("http://localhost:5000/api/products");
+      const res = await fetch("API_BASE_URL/api/products");
       const data = await res.json();
       setProducts(data);
 
@@ -30,7 +30,7 @@ const ProductList = () => {
 
     const qty = quantities[productId] || 1;
 
-    await fetch("http://localhost:5000/api/cart", {
+    await fetch("API_BASE_URL/api/cart", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

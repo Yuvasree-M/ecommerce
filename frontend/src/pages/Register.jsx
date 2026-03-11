@@ -3,7 +3,7 @@ import { createUserWithEmailAndPassword, signOut } from "firebase/auth";
 import { auth } from "../firebase";
 import { useNavigate, Link } from "react-router-dom";
 import { FaUser, FaPhone, FaEnvelope, FaLock, FaEye, FaEyeSlash, FaMapMarkerAlt } from "react-icons/fa";
-
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 const Register = () => {
 
   const [name, setName] = useState("");
@@ -72,7 +72,7 @@ const Register = () => {
       const uid = userCredential.user.uid;
 
       // Send user data to backend
-      await fetch("http://localhost:5000/api/users/register", {
+      await fetch("API_BASE_URL/api/users/register", {
         method: "POST",
         headers: {
           "Content-Type": "application/json"

@@ -1,7 +1,7 @@
 import { useEffect, useState, useContext } from "react";
 import { useParams } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
-
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 const Invoice = () => {
 
   const { id } = useParams();
@@ -14,7 +14,7 @@ const Invoice = () => {
     const fetchOrder = async () => {
 
       const res = await fetch(
-        "http://localhost:5000/api/orders",
+        "API_BASE_URL/api/orders",
         {
           headers: {
             Authorization: `Bearer ${token}`
@@ -41,7 +41,7 @@ const Invoice = () => {
   const downloadInvoice = () => {
 
     window.open(
-      `http://localhost:5000/api/invoice/${id}`,
+      `API_BASE_URL/api/invoice/${id}`,
       "_blank"
     );
 
