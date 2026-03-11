@@ -1,0 +1,23 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Optional Global Styles */
+html {
+  scroll-behavior: smooth; /* smooth scrolling */
+}
+
+body, #root {
+  min-height: 100%;       /* allow page to grow */
+  overflow-x: hidden;
+  font-family: 'Inter', sans-serif;
+  background-color: #f0f9e8;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+button {
+  cursor: pointer;
+}
