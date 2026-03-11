@@ -1,6 +1,6 @@
 import { createContext, useState, useEffect, useContext } from "react";
 import { AuthContext } from "./AuthContext";
-
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 export const CartContext = createContext();
 
 export const CartProvider = ({ children }) => {
@@ -10,7 +10,7 @@ export const CartProvider = ({ children }) => {
   const fetchCart = async () => {
     if (!token) return;
     try {
-      const res = await fetch("http://localhost:5000/api/cart", {
+      const res = await fetch(`${API_BASE_URL}/api/cart`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();

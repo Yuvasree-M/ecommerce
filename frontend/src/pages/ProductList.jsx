@@ -25,24 +25,47 @@ const ProductList = () => {
     fetchProducts();
   }, []);
 
-  const handleAddToCart = async (productId) => {
-    if (!token) return alert("Please login");
+  // const handleAddToCart = async (productId) => {
+  //   if (!token) return alert("Please login");
 
-    const qty = quantities[productId] || 1;
+  //   const qty = quantities[productId] || 1;
 
+  //   await fetch(`${API_BASE_URL}/api/cart`, {
+  //     method: "POST",
+  //     headers: {
+  //       "Content-Type": "application/json",
+  //       Authorization: `Bearer ${token}`,
+  //     },
+  //     body: JSON.stringify({ productId, quantity: qty }),
+  //   });
+
+  //   fetchCart();
+  //   setQuantities((prev) => ({ ...prev, [productId]: 1 })); // reset quantity after adding
+  // };
+const handleAddToCart = async (productId) => {
+  if (!token) return alert("Please login");
+
+  const qty = quantities[productId] || 1;
+
+  try {
     await fetch(`${API_BASE_URL}/api/cart`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify({ productId, quantity: qty }),
+      body: JSON.stringify({
+        productId: productId,
+        quantity: qty
+      }),
     });
 
     fetchCart();
-    setQuantities((prev) => ({ ...prev, [productId]: 1 })); // reset quantity after adding
-  };
-
+ setQuantities((prev) => ({ ...prev, [productId]: 1 }))
+  } catch (err) {
+    console.error("Cart error:", err);
+  }
+};
   const increment = (id) =>
     setQuantities((prev) => ({ ...prev, [id]: prev[id] + 1 }));
   const decrement = (id) =>
