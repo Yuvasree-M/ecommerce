@@ -37,22 +37,35 @@ export const createRazorpayOrder = async (req, res) => {
   }
 };
 
-// Save order & transaction
 export const saveOrder = async (req, res) => {
   try {
-    const { cartItems, address, phone, paymentType, status } = req.body;
+
+    const {
+      cartItems,
+      address,
+      phone,
+      paymentId,
+      razorpayOrderId
+    } = req.body;
+
     const userId = req.user.uid;
 
     if (!cartItems || cartItems.length === 0) {
       return res.status(400).json({ message: "Cart is empty" });
     }
 
-    // Fetch product details
+    /* FETCH PRODUCT DETAILS */
+
     const itemsWithDetails = await Promise.all(
       cartItems.map(async (item) => {
+
         const doc = await db.collection("products").doc(item.productId).get();
-        if (!doc.exists) throw new Error(`Product not found: ${item.productId}`);
+
+        if (!doc.exists)
+          throw new Error(`Product not found: ${item.productId}`);
+
         const product = doc.data();
+
         return {
           productId: doc.id,
           name: product.name,
@@ -63,34 +76,49 @@ export const saveOrder = async (req, res) => {
       })
     );
 
-    // Save order
+    const totalAmount = itemsWithDetails.reduce(
+      (sum, i) => sum + i.price * i.quantity,
+      0
+    );
+
+    /* SAVE ORDER */
+
     const orderRef = await db.collection("orders").add({
       userId,
       items: itemsWithDetails,
+      totalAmount,
       address,
       phone,
-      paymentType,
-      status, // PENDING / PAID
+      paymentId,
+      razorpayOrderId,
+      paymentType: "ONLINE",
+      status: "PAID",
       createdAt: new Date(),
       updatedAt: new Date(),
     });
 
-    // Save transaction for non-COD payments
-    if (paymentType !== "COD") {
-      await db.collection("transactions").add({
-        userId,
-        orderId: orderRef.id,
-        transactionId: shortid.generate(),
-        transactionType: paymentType,
-        transactionStatus: status === "PAID" ? "SUCCESS" : "PENDING",
-        createdAt: new Date(),
-      });
-    }
+    /* SAVE TRANSACTION */
 
-    // Clear user cart
-    await db.collection("carts").doc(userId).set({ items: [] });
+    await db.collection("transactions").add({
+      userId,
+      orderId: orderRef.id,
+      transactionId: paymentId,
+      transactionType: "ONLINE",
+      transactionStatus: "SUCCESS",
+      createdAt: new Date(),
+    });
 
-    res.json({ message: "Order completed successfully", orderId: orderRef.id });
+    /* CLEAR CART */
+
+    await db.collection("carts").doc(userId).set({
+      items: [],
+    });
+
+    res.json({
+      message: "Order completed successfully",
+      orderId: orderRef.id,
+    });
+
   } catch (err) {
     console.error("Save order error:", err);
     res.status(500).json({ message: err.message });

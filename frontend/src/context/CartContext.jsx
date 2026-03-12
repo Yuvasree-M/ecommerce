@@ -1,19 +1,22 @@
-// src/context/CartContext.jsx
 import { createContext, useState, useEffect, useContext } from "react";
 import { AuthContext } from "./AuthContext";
-import { apiFetch } from "../services/api.js"; // use your helper for auth
+import { apiFetch } from "../services/api.js";
 
 export const CartContext = createContext();
 
 export const CartProvider = ({ children }) => {
   const { token } = useContext(AuthContext);
+
   const [cart, setCart] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  // Fetch cart items from API
+  /* ---------------- FETCH CART ---------------- */
+
   const fetchCart = async () => {
     if (!token) return;
+
     setLoading(true);
+
     try {
       const data = await apiFetch("/api/cart");
       setCart(data.items || []);
@@ -29,37 +32,69 @@ export const CartProvider = ({ children }) => {
     fetchCart();
   }, [token]);
 
-  // Count unique products in cart
-  const cartCount = cart.length;
+  /* ---------------- CART COUNT ---------------- */
 
-  // Compute total price
+  const cartCount = cart.reduce(
+    (total, item) => total + (item.quantity || 1),
+    0
+  );
+
+  /* ---------------- TOTAL PRICE ---------------- */
+
   const totalPrice = cart.reduce(
     (acc, item) => acc + (item.price || 0) * (item.quantity || 1),
     0
   );
 
-  // Add item to cart (update or append)
+  /* ---------------- ADD TO CART ---------------- */
+
   const addToCart = async (product, quantity = 1) => {
     if (!token) return;
+
     try {
       await apiFetch("/api/cart", {
         method: "POST",
-        body: JSON.stringify({ productId: product._id, quantity }),
+        body: JSON.stringify({
+          productId: product.id,   // fixed from _id
+          quantity,
+        }),
       });
+
       await fetchCart();
     } catch (err) {
       console.error("Add to cart failed:", err);
     }
   };
 
-  // Remove item from cart
+  /* ---------------- REMOVE FROM CART ---------------- */
+
   const removeFromCart = async (productId) => {
     if (!token) return;
+
     try {
-      await apiFetch(`/api/cart/${productId}`, { method: "DELETE" });
+      await apiFetch(`/api/cart/${productId}`, {
+        method: "DELETE",
+      });
+
       await fetchCart();
     } catch (err) {
       console.error("Remove from cart failed:", err);
+    }
+  };
+
+  /* ---------------- CLEAR CART ---------------- */
+
+  const clearCart = async () => {
+    if (!token) return;
+
+    try {
+      await apiFetch("/api/cart/clear", {
+        method: "POST",
+      });
+
+      setCart([]);
+    } catch (err) {
+      console.error("Clear cart failed:", err);
     }
   };
 
@@ -74,6 +109,7 @@ export const CartProvider = ({ children }) => {
         setCart,
         addToCart,
         removeFromCart,
+        clearCart,
       }}
     >
       {children}
