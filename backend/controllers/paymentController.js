@@ -92,7 +92,7 @@ export const saveOrder = async (req, res) => {
       paymentId,
       razorpayOrderId,
       paymentType: "ONLINE",
-      status: "PAID",
+      status: "ORDER_PLACED",
       createdAt: new Date(),
       updatedAt: new Date(),
     });
