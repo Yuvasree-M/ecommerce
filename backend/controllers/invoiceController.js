@@ -2,7 +2,7 @@ import { generateInvoice } from "../utils/generateInvoice.js";
 import { sendInvoiceMail } from "../utils/sendInvoiceMail.js";
 import path from "path";
 import fs from "fs";
-import orderCollection from "../models/Order.js";
+import orderCollection from "../models/order.js";
 
 export const downloadInvoice = async (req, res) => {
   const orderId = req.params.id;

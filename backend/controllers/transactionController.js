@@ -1,44 +1,63 @@
 import { db } from "../config/firebase.js";
 
-// GET ALL TRANSACTIONS (ADMIN)
+/* -----------------------------
+   Helper: Safe Date Conversion
+------------------------------*/
+const getDate = (value) => {
+  if (!value) return new Date(0);
+  if (typeof value.toDate === "function") return value.toDate();
+  return new Date(value);
+};
+
+/* -----------------------------
+   Admin → Get All Transactions
+------------------------------*/
 export const getAllTransactions = async (req, res) => {
   try {
-    const snapshot = await db
-      .collection("transactions")
-      .orderBy("createdAt", "desc")
-      .get();
+    console.log("Admin fetching all transactions");
+
+    const snapshot = await db.collection("transactions").get();
 
     const transactions = snapshot.docs.map((doc) => ({
       id: doc.id,
       ...doc.data(),
     }));
 
+    // Sort newest first
+    transactions.sort((a, b) => getDate(b.createdAt) - getDate(a.createdAt));
+
     res.json(transactions);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Failed to fetch transactions" });
+    console.error("getAllTransactions error:", err);
+    res.status(500).json({ message: err.message });
   }
 };
 
-// GET USER-SPECIFIC TRANSACTIONS
+/* -----------------------------
+   User → Get Their Transactions
+------------------------------*/
 export const getUserTransactions = async (req, res) => {
   try {
-    const userId = req.user.uid;
+    console.log("Fetching transactions for user:", req.user);
 
     const snapshot = await db
       .collection("transactions")
-      .where("userId", "==", userId)
-      .orderBy("createdAt", "desc")
+      .where("userId", "==", req.user.uid)
       .get();
+
+    console.log("Transactions found:", snapshot.size);
 
     const transactions = snapshot.docs.map((doc) => ({
       id: doc.id,
       ...doc.data(),
     }));
 
+    // Sort newest first
+    transactions.sort((a, b) => getDate(b.createdAt) - getDate(a.createdAt));
+
     res.json(transactions);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Failed to fetch your transactions" });
+    console.error("getUserTransactions error:", err);
+    res.status(500).json({ message: err.message });
   }
 };
