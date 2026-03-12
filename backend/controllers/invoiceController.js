@@ -2,13 +2,13 @@ import { generateInvoice } from "../utils/generateInvoice.js";
 import { sendInvoiceMail } from "../utils/sendInvoiceMail.js";
 import path from "path";
 import fs from "fs";
-import Order from "../models/Order.js"; // your Order model
+import orderCollection from "../models/Order.js";
 
 export const downloadInvoice = async (req, res) => {
   const orderId = req.params.id;
 
   try {
-    const order = await Order.findById(orderId);
+    const order = await orderCollection.findById(orderId);
 
     if (!order) return res.status(404).json({ error: "Order not found" });
     if (order.user.toString() !== req.user.id)
