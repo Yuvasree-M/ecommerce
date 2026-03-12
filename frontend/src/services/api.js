@@ -4,11 +4,12 @@ const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 export const apiFetch = async (url, options = {}) => {
   try {
-    const user = auth.currentUser;
+
+    const currentUser = auth.currentUser;
     let token = null;
 
-    if (user) {
-      token = await user.getIdToken();
+    if (currentUser) {
+      token = await currentUser.getIdToken();
     }
 
     const response = await fetch(`${API_BASE_URL}${url}`, {
@@ -26,8 +27,11 @@ export const apiFetch = async (url, options = {}) => {
     }
 
     return response.json();
+
   } catch (error) {
+
     console.error("API Error:", error);
     throw error;
+
   }
 };

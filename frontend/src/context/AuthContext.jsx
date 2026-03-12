@@ -22,11 +22,11 @@ export const AuthProvider = ({ children }) => {
 
         if (currentUser) {
 
-          const idToken = await currentUser.getIdToken();
-
+          // Get Firebase ID token
+          const idToken = await currentUser.getIdToken(true);
           setToken(idToken);
-          localStorage.setItem("token", idToken);
 
+          // Get user role from Firestore
           const userDocRef = doc(db, "users", currentUser.uid);
           const userSnap = await getDoc(userDocRef);
 
@@ -37,7 +37,7 @@ export const AuthProvider = ({ children }) => {
             setUser({
               uid: currentUser.uid,
               email: currentUser.email,
-              name: userData.name,
+              name: userData.name || "User",
               role: userData.role || "USER"
             });
 
@@ -48,7 +48,7 @@ export const AuthProvider = ({ children }) => {
             setUser({
               uid: currentUser.uid,
               email: currentUser.email,
-              name: "Unknown User"
+              name: "User"
             });
 
             setRole("USER");
@@ -60,8 +60,6 @@ export const AuthProvider = ({ children }) => {
           setUser(null);
           setRole(null);
           setToken(null);
-
-          localStorage.removeItem("token");
 
         }
 
