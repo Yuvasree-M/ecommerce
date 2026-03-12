@@ -76,11 +76,12 @@ const AllOrders = () => {
           value={filterStatus}
           onChange={(e) => setFilterStatus(e.target.value)}
         >
-          <option value="ALL">All</option>
-          <option value="PAID">Paid</option>
-          <option value="SHIPPED">Shipped</option>
-          <option value="CANCELLED">Cancelled</option>
-          <option value="PENDING">Pending</option>
+        <option value="ALL">All</option>
+<option value="ORDER_PLACED">Order Placed</option>
+<option value="APPROVED">Approved</option>
+<option value="SHIPPED">Shipped</option>
+<option value="DELIVERED">Delivered</option>
+<option value="REJECTED">Rejected</option>
         </select>
       </div>
 
@@ -132,15 +133,17 @@ const AllOrders = () => {
 
                   <td className="px-4 py-3 border-b border-gray-200 dark:border-gray-700 text-sm">
                     <span
-                      className={`px-2 py-1 rounded-full text-xs font-semibold ${
-                        order.status === "PAID"
-                          ? "bg-green-100 text-green-700 dark:bg-green-800 dark:text-green-200"
-                          : order.status === "SHIPPED"
-                          ? "bg-blue-100 text-blue-700 dark:bg-blue-800 dark:text-blue-200"
-                          : order.status === "CANCELLED"
-                          ? "bg-red-100 text-red-700 dark:bg-red-800 dark:text-red-200"
-                          : "bg-yellow-100 text-yellow-700 dark:bg-yellow-800 dark:text-yellow-200"
-                      }`}
+                     className={`px-2 py-1 rounded-full text-xs font-semibold ${
+  order.status === "ORDER_PLACED"
+    ? "bg-yellow-100 text-yellow-700"
+    : order.status === "APPROVED"
+    ? "bg-blue-100 text-blue-700"
+    : order.status === "SHIPPED"
+    ? "bg-indigo-100 text-indigo-700"
+    : order.status === "DELIVERED"
+    ? "bg-green-100 text-green-700"
+    : "bg-red-100 text-red-700"
+}`}
                     >
                       {order.status}
                     </span>

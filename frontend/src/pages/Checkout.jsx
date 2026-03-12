@@ -82,7 +82,7 @@ const Checkout = () => {
     try {
       /* ---------------- CREATE RAZORPAY ORDER ---------------- */
 
-      const data = await apiFetch("/api/payment/create-order", {
+    const data = await apiFetch("/api/payment/razorpay/order", {
         method: "POST",
         body: JSON.stringify({
           amount: totalAmount,
@@ -102,7 +102,7 @@ const Checkout = () => {
 
         handler: async (response) => {
           try {
-            const order = await apiFetch("/api/orders/place-order", {
+           const order = await apiFetch("/api/payment/order/save", {
               method: "POST",
               body: JSON.stringify({
                 ...orderData,

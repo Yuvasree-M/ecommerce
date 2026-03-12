@@ -78,10 +78,11 @@ const AdminDashboard = () => {
     try {
       setUpdatingOrderId(orderId);
 
-      await apiFetch(`/api/orders/${orderId}/status`, {
-        method: "PUT",
-        body: JSON.stringify({ status }),
-      });
+    await apiFetch(`/api/orders/${orderId}/status`, {
+  method: "PATCH",
+  body: JSON.stringify({ status }),
+});
+      
 
       await fetchOrders();
     } catch (err) {

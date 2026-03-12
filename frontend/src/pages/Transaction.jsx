@@ -34,7 +34,7 @@ const Transaction = () => {
 
       const endpoint =
         role === "ADMIN"
-          ? "/api/transactions"
+          ? "/api/transactions/me"
           : "/api/transactions/me";
 
       const data = await apiFetch(endpoint);
