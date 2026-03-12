@@ -2,37 +2,59 @@ import { useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import { CartContext } from "../context/CartContext";
-const API_BASE_URL = import.meta.env.VITE_API_URL;
+import { apiFetch } from "../services/api";
+
 const Cart = () => {
   const { token } = useContext(AuthContext);
   const { cart, fetchCart } = useContext(CartContext);
   const navigate = useNavigate();
 
+  /* ---------------- REMOVE ITEM ---------------- */
+
   const handleRemove = async (id) => {
-    await fetch(`${API_BASE_URL}/api/cart/${id}`, {
-      method: "DELETE",
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    fetchCart();
+    try {
+      await apiFetch(`/api/cart/${id}`, {
+        method: "DELETE",
+      });
+
+      fetchCart();
+    } catch (error) {
+      console.error("Remove cart item failed", error);
+    }
   };
+
+  /* ---------------- UPDATE QUANTITY ---------------- */
 
   const updateQuantity = async (id, quantity) => {
     if (quantity < 1) return;
-    await fetch(`${API_BASE_URL}/api/cart`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ productId: id, quantity }),
-    });
-    fetchCart();
+
+    try {
+      await apiFetch("/api/cart", {
+        method: "POST",
+        body: JSON.stringify({
+          productId: id,
+          quantity,
+        }),
+      });
+
+      fetchCart();
+    } catch (error) {
+      console.error("Update quantity failed", error);
+    }
   };
 
+  /* ---------------- CHECKOUT ---------------- */
+
   const handleCheckout = () => {
-    if (!token) return alert("Login to checkout");
+    if (!token) {
+      alert("Login to checkout");
+      return;
+    }
+
     navigate("/checkout");
   };
+
+  /* ---------------- TOTAL PRICE ---------------- */
 
   const totalPrice = cart.reduce(
     (sum, item) => sum + item.price * item.quantity,
@@ -45,6 +67,8 @@ const Cart = () => {
         My Cart
       </h2>
 
+      {/* EMPTY CART */}
+
       {cart.length === 0 && (
         <p className="text-gray-500 dark:text-gray-400 text-center mt-16">
           Your cart is empty.
@@ -53,8 +77,9 @@ const Cart = () => {
 
       {cart.length > 0 && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          
-          {/* Cart Items */}
+
+          {/* CART ITEMS */}
+
           <div className="lg:col-span-2 space-y-6">
             {cart.map((item) => (
               <div
@@ -77,10 +102,13 @@ const Cart = () => {
                       ₹ {item.price}
                     </p>
 
-                    {/* Quantity Controls */}
+                    {/* QUANTITY CONTROLS */}
+
                     <div className="flex items-center gap-3 mt-4">
                       <button
-                        onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                        onClick={() =>
+                          updateQuantity(item.id, item.quantity - 1)
+                        }
                         className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 hover:bg-green-100 dark:hover:bg-green-600 transition text-green-700 dark:text-green-300 font-semibold"
                       >
                         −
@@ -91,7 +119,9 @@ const Cart = () => {
                       </span>
 
                       <button
-                        onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                        onClick={() =>
+                          updateQuantity(item.id, item.quantity + 1)
+                        }
                         className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 hover:bg-green-100 dark:hover:bg-green-600 transition text-green-700 dark:text-green-300 font-semibold"
                       >
                         +
@@ -114,7 +144,8 @@ const Cart = () => {
             ))}
           </div>
 
-          {/* Order Summary */}
+          {/* ORDER SUMMARY */}
+
           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-md p-6 h-fit sticky top-24 border border-gray-200 dark:border-gray-700">
             <h3 className="text-xl font-semibold mb-4 text-gray-900 dark:text-gray-100">
               Order Summary

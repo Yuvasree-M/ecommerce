@@ -5,43 +5,76 @@ import "react-toastify/dist/ReactToastify.css";
 
 import Navbar from "./components/Navbar";
 import ProtectedRoute from "./components/ProtectedRoute";
+import Loader from "./components/Loader";
+import ScrollToTop from "./components/ScrollToTop";
 
-// Lazy load all pages
+/* -------- Lazy Loaded Pages -------- */
+
 const Home = React.lazy(() => import("./pages/Home"));
 const ProductList = React.lazy(() => import("./pages/ProductList"));
 const Cart = React.lazy(() => import("./pages/Cart"));
 const Checkout = React.lazy(() => import("./pages/Checkout"));
 const Invoice = React.lazy(() => import("./pages/Invoice"));
 const Orders = React.lazy(() => import("./pages/Orders"));
+const Transaction = React.lazy(() => import("./pages/Transaction"));
+
+const Profile = React.lazy(() => import("./pages/Profile"));
+
 const AdminDashboard = React.lazy(() => import("./pages/AdminDashboard"));
 const ManageProducts = React.lazy(() => import("./pages/ManageProducts"));
 const AllOrders = React.lazy(() => import("./pages/AllOrders"));
+
 const Login = React.lazy(() => import("./pages/Login"));
 const Register = React.lazy(() => import("./pages/Register"));
-const Transaction = React.lazy(() => import("./pages/Transaction"));
+
+/* -------- App -------- */
 
 function App() {
   return (
     <BrowserRouter>
+
+      {/* Scroll to top when route changes */}
+      <ScrollToTop />
+
+      {/* Navbar */}
       <Navbar />
 
-      <Suspense
-        fallback={
-          <div className="flex justify-center items-center h-screen text-xl font-semibold">
-            Loading...
-          </div>
-        }
-      >
+      {/* Page Loader while lazy loading */}
+      <Suspense fallback={<Loader />}>
+
         <Routes>
 
-          {/* Public routes */}
+          {/* -------- Public Routes -------- */}
+
           <Route path="/" element={<Home />} />
+
           <Route path="/products" element={<ProductList />} />
-          <Route path="/cart" element={<Cart />} />
+
           <Route path="/login" element={<Login />} />
+
           <Route path="/register" element={<Register />} />
 
-          {/* User routes */}
+
+          {/* -------- Protected User Routes -------- */}
+
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <Profile />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/cart"
+            element={
+              <ProtectedRoute>
+                <Cart />
+              </ProtectedRoute>
+            }
+          />
+
           <Route
             path="/checkout"
             element={
@@ -50,8 +83,6 @@ function App() {
               </ProtectedRoute>
             }
           />
-
-          <Route path="/invoice/:id" element={<Invoice />} />
 
           <Route
             path="/orders"
@@ -71,7 +102,18 @@ function App() {
             }
           />
 
-          {/* Admin routes */}
+          <Route
+            path="/invoice/:id"
+            element={
+              <ProtectedRoute>
+                <Invoice />
+              </ProtectedRoute>
+            }
+          />
+
+
+          {/* -------- Admin Routes -------- */}
+
           <Route
             path="/admin/dashboard"
             element={
@@ -91,15 +133,6 @@ function App() {
           />
 
           <Route
-            path="/admin/products"
-            element={
-              <ProtectedRoute adminOnly>
-                <ProductList />
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
             path="/admin/all-orders"
             element={
               <ProtectedRoute adminOnly>
@@ -109,13 +142,16 @@ function App() {
           />
 
         </Routes>
+
       </Suspense>
 
+      {/* Toast Notifications */}
       <ToastContainer
         position="top-center"
         autoClose={3000}
         theme="colored"
       />
+
     </BrowserRouter>
   );
 }

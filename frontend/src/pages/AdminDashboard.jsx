@@ -1,5 +1,6 @@
 import { useState, useEffect, useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
+import { apiFetch } from "../services/api";
 
 const AdminDashboard = () => {
   const { token } = useContext(AuthContext);
@@ -16,75 +17,78 @@ const AdminDashboard = () => {
   const [updatingOrderId, setUpdatingOrderId] = useState(null);
 
   /* ---------------- FETCH USERS ---------------- */
-const API_BASE_URL = import.meta.env.VITE_API_URL;
+
   const fetchUsers = async () => {
-    const res = await fetch(`${API_BASE_URL}/api/users`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    try {
+      const data = await apiFetch("/api/users");
 
-    const data = await res.json();
-
-    setUsers(data);
-    setAdminCount(data.filter((u) => u.role === "ADMIN").length);
-    setUserCount(data.filter((u) => u.role === "USER").length);
+      setUsers(data);
+      setAdminCount(data.filter((u) => u.role === "ADMIN").length);
+      setUserCount(data.filter((u) => u.role === "USER").length);
+    } catch (err) {
+      console.error("Failed to fetch users", err);
+    }
   };
 
   /* ---------------- FETCH ORDERS ---------------- */
 
   const fetchOrders = async () => {
-    const res = await fetch(`${API_BASE_URL}/api/orders/all`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    try {
+      const data = await apiFetch("/api/orders/all");
 
-    const data = await res.json();
-    setOrders(data);
+      setOrders(data);
 
-    const statusCount = {};
-    data.forEach((o) => {
-      statusCount[o.status] = (statusCount[o.status] || 0) + 1;
-    });
+      const statusCount = {};
 
-    setOrdersByStatus(statusCount);
+      data.forEach((o) => {
+        statusCount[o.status] = (statusCount[o.status] || 0) + 1;
+      });
+
+      setOrdersByStatus(statusCount);
+    } catch (err) {
+      console.error("Failed to fetch orders", err);
+    }
   };
 
   /* ---------------- FETCH PRODUCTS ---------------- */
 
   const fetchProducts = async () => {
-    const res = await fetch(`${API_BASE_URL}/api/products`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-
-    const data = await res.json();
-    setProductsCount(data.length);
+    try {
+      const data = await apiFetch("/api/products");
+      setProductsCount(data.length);
+    } catch (err) {
+      console.error("Failed to fetch products", err);
+    }
   };
 
   /* ---------------- FETCH TRANSACTIONS ---------------- */
 
   const fetchTransactions = async () => {
-    const res = await fetch(`${API_BASE_URL}/api/transactions`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-
-    const data = await res.json();
-    setTransactions(data);
+    try {
+      const data = await apiFetch("/api/transactions");
+      setTransactions(data);
+    } catch (err) {
+      console.error("Failed to fetch transactions", err);
+    }
   };
 
   /* ---------------- UPDATE ORDER STATUS ---------------- */
 
   const updateStatus = async (orderId, status) => {
-    setUpdatingOrderId(orderId);
+    try {
+      setUpdatingOrderId(orderId);
 
-    await fetch(`${API_BASE_URL}/api/orders/${orderId}/status`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ status }),
-    });
+      await apiFetch(`/api/orders/${orderId}/status`, {
+        method: "PUT",
+        body: JSON.stringify({ status }),
+      });
 
-    await fetchOrders();
-    setUpdatingOrderId(null);
+      await fetchOrders();
+    } catch (err) {
+      console.error("Failed to update order status", err);
+    } finally {
+      setUpdatingOrderId(null);
+    }
   };
 
   /* ---------------- USER NAME ---------------- */
@@ -244,9 +248,7 @@ const API_BASE_URL = import.meta.env.VITE_API_URL;
                 <tr key={order.id} className="border-b hover:bg-gray-50">
                   <td className="px-4 py-3">{order.id}</td>
 
-                  <td className="px-4 py-3">
-                    {getUserName(order.userId)}
-                  </td>
+                  <td className="px-4 py-3">{getUserName(order.userId)}</td>
 
                   <td className="px-4 py-3">
                     <span

@@ -1,40 +1,30 @@
-import { db } from "../config/firebase.js";
 import { generateInvoice } from "../utils/generateInvoice.js";
-import { sendInvoiceMail } from "../utils/sendMail.js";
+import { sendInvoiceMail } from "../utils/sendInvoiceMail.js";
 import path from "path";
+import fs from "fs";
+import Order from "../models/Order.js"; // your Order model
 
 export const downloadInvoice = async (req, res) => {
+  const orderId = req.params.id;
 
   try {
+    const order = await Order.findById(orderId);
 
-    const { id } = req.params;
+    if (!order) return res.status(404).json({ error: "Order not found" });
+    if (order.user.toString() !== req.user.id)
+      return res.status(403).json({ error: "Unauthorized" });
 
-    const orderDoc = await db.collection("orders").doc(id).get();
+    const filePath = path.join("tmp", `invoice_${orderId}.pdf`);
+    await generateInvoice(order, orderId, filePath);
 
-    if (!orderDoc.exists) {
-      return res.status(404).json({ message: "Order not found" });
-    }
+    // Send invoice to email asynchronously
+    sendInvoiceMail(req.user.email, filePath).catch(console.error);
 
-    const order = orderDoc.data();
-
-    const userDoc = await db.collection("users").doc(order.userId).get();
-
-    const user = userDoc.data();
-
-    const filePath = `./invoices/invoice_${id}.pdf`;
-
-    await generateInvoice(order, id, filePath);
-
-    await sendInvoiceMail(user.email, filePath);
-
-    res.download(path.resolve(filePath));
-
+    res.download(filePath, "invoice.pdf", (err) => {
+      fs.unlink(filePath, () => {}); // delete after sending
+    });
   } catch (err) {
-
     console.error(err);
-
-    res.status(500).json({ message: "Invoice generation failed" });
-
+    res.status(500).json({ error: "Failed to generate invoice" });
   }
-
 };

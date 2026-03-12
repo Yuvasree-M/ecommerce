@@ -1,20 +1,17 @@
-import { useEffect, useState, useContext } from "react";
-import { AuthContext } from "../context/AuthContext";
-const API_BASE_URL = import.meta.env.VITE_API_URL;
+import { useEffect, useState } from "react";
+import { apiFetch } from "../services/api";
+
 const AllOrders = () => {
-  const { token } = useContext(AuthContext);
   const [orders, setOrders] = useState([]);
   const [filterStatus, setFilterStatus] = useState("ALL");
   const [sortField, setSortField] = useState("id");
   const [sortAsc, setSortAsc] = useState(true);
 
+  /* ---------------- FETCH ORDERS ---------------- */
+
   const fetchOrders = async () => {
     try {
-      const res = await fetch(`${API_BASE_URL}/api/orders/all`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!res.ok) throw new Error("Failed to fetch orders");
-      const data = await res.json();
+      const data = await apiFetch("/api/orders/all");
       setOrders(data);
     } catch (err) {
       console.error(err);
@@ -22,25 +19,40 @@ const AllOrders = () => {
     }
   };
 
+  /* ---------------- LOAD DATA ---------------- */
+
   useEffect(() => {
     fetchOrders();
   }, []);
+
+  /* ---------------- FILTER + SORT ---------------- */
 
   const filteredOrders = orders
     .filter((o) => filterStatus === "ALL" || o.status === filterStatus)
     .sort((a, b) => {
       let fieldA = a[sortField];
       let fieldB = b[sortField];
+
+      if (sortField === "items") {
+        fieldA = a.items.length;
+        fieldB = b.items.length;
+      }
+
       if (typeof fieldA === "string") fieldA = fieldA.toLowerCase();
       if (typeof fieldB === "string") fieldB = fieldB.toLowerCase();
+
       if (fieldA > fieldB) return sortAsc ? 1 : -1;
       if (fieldA < fieldB) return sortAsc ? -1 : 1;
+
       return 0;
     });
 
+  /* ---------------- SORT HANDLER ---------------- */
+
   const handleSort = (field) => {
-    if (sortField === field) setSortAsc(!sortAsc);
-    else {
+    if (sortField === field) {
+      setSortAsc(!sortAsc);
+    } else {
       setSortField(field);
       setSortAsc(true);
     }
@@ -52,11 +64,13 @@ const AllOrders = () => {
         All User Orders
       </h2>
 
-      {/* Filter */}
+      {/* FILTER */}
+
       <div className="mb-4 flex items-center gap-4">
         <label className="text-gray-700 dark:text-gray-300 font-semibold text-sm">
           Filter by Status:
         </label>
+
         <select
           className="px-3 py-1 border rounded bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 border-gray-300 dark:border-gray-600"
           value={filterStatus}
@@ -116,7 +130,6 @@ const AllOrders = () => {
                     {order.phone}
                   </td>
 
-        
                   <td className="px-4 py-3 border-b border-gray-200 dark:border-gray-700 text-sm">
                     <span
                       className={`px-2 py-1 rounded-full text-xs font-semibold ${

@@ -1,11 +1,18 @@
+// src/routes/paymentRoutes.js
 import express from "express";
+import { createRazorpayOrder, saveOrder } from "../controllers/paymentController.js";
 import { verifyToken } from "../middleware/verifyToken.js";
 import { attachUser } from "../middleware/attachUser.js";
-import { createRazorpayOrder, saveOrder } from "../controllers/paymentController.js";
 
 const router = express.Router();
 
-router.post("/create-order", verifyToken, attachUser, createRazorpayOrder);
+// All payment routes require authentication
+router.use(verifyToken, attachUser);
 
+// Create Razorpay order
+router.post("/razorpay/order", createRazorpayOrder);
+
+// Save order and transaction (after payment)
+router.post("/order/save", saveOrder);
 
 export default router;

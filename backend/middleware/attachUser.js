@@ -2,9 +2,7 @@ import { db } from "../config/firebase.js";
 
 export const attachUser = async (req, res, next) => {
   try {
-    if (!req.user) {
-      return res.status(401).json({ message: "User not found" });
-    }
+    if (!req.user) return res.status(401).json({ message: "User not found" });
 
     const userRef = db.collection("users").doc(req.user.uid);
     const doc = await userRef.get();
@@ -18,9 +16,7 @@ export const attachUser = async (req, res, next) => {
       });
     }
 
-    const userData = doc.exists ? doc.data() : { role: "USER" };
-
-    // 🔑 Assign role to req.user so /api/protected can use it
+    const userData = doc.exists ? doc.data() : { role: "USER", name: req.user.name };
     req.user.role = userData.role || "USER";
     req.user.name = userData.name || req.user.name;
 

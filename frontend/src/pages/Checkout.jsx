@@ -2,9 +2,9 @@ import { useContext, useState, useEffect } from "react";
 import { AuthContext } from "../context/AuthContext";
 import { CartContext } from "../context/CartContext";
 import { useNavigate } from "react-router-dom";
+import { apiFetch } from "../services/api";
 
 const Checkout = () => {
-
   const { token } = useContext(AuthContext);
   const { cart, fetchCart } = useContext(CartContext);
   const navigate = useNavigate();
@@ -17,34 +17,28 @@ const Checkout = () => {
     (sum, item) => sum + item.price * item.quantity,
     0
   );
-const API_BASE_URL = import.meta.env.VITE_API_URL;
-  // Auto fill address + phone
+
+  /* ---------------- FETCH USER PROFILE ---------------- */
+
   useEffect(() => {
-
     const fetchProfile = async () => {
+      try {
+        const data = await apiFetch("/api/users/profile");
 
-      const res = await fetch(
-        `${API_BASE_URL}/api/users/profile`,
-        {
-          headers: { Authorization: `Bearer ${token}` }
-        }
-      );
-
-      const data = await res.json();
-
-      setAddress(data.address || "");
-      setPhone(data.phone || "");
-
+        setAddress(data.address || "");
+        setPhone(data.phone || "");
+      } catch (err) {
+        console.error("Profile fetch failed", err);
+      }
     };
 
     if (token) fetchProfile();
-
   }, [token]);
 
-  // Load Razorpay
+  /* ---------------- LOAD RAZORPAY SCRIPT ---------------- */
+
   const loadRazorpayScript = () =>
     new Promise((resolve) => {
-
       const script = document.createElement("script");
 
       script.src = "https://checkout.razorpay.com/v1/checkout.js";
@@ -56,8 +50,9 @@ const API_BASE_URL = import.meta.env.VITE_API_URL;
       document.body.appendChild(script);
     });
 
-  const handlePayment = async () => {
+  /* ---------------- HANDLE PAYMENT ---------------- */
 
+  const handlePayment = async () => {
     if (!address.trim()) return alert("Enter delivery address");
 
     if (!/^[0-9]{10}$/.test(phone))
@@ -73,7 +68,7 @@ const API_BASE_URL = import.meta.env.VITE_API_URL;
         quantity: i.quantity,
       })),
       address,
-      phone
+      phone,
     };
 
     const loaded = await loadRazorpayScript();
@@ -85,23 +80,16 @@ const API_BASE_URL = import.meta.env.VITE_API_URL;
     }
 
     try {
+      /* ---------------- CREATE RAZORPAY ORDER ---------------- */
 
-      const res = await fetch(
-        `${API_BASE_URL}/api/payment/create-order`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ amount: totalAmount }),
-        }
-      );
-
-      const data = await res.json();
+      const data = await apiFetch("/api/payment/create-order", {
+        method: "POST",
+        body: JSON.stringify({
+          amount: totalAmount,
+        }),
+      });
 
       const options = {
-
         key: data.key,
         amount: data.amount,
         currency: data.currency,
@@ -110,83 +98,68 @@ const API_BASE_URL = import.meta.env.VITE_API_URL;
         name: "Verdura",
         description: "Order Payment",
 
-        handler: async (response) => {
+        /* ---------------- PAYMENT SUCCESS ---------------- */
 
-          const orderRes = await fetch(
-            `${API_BASE_URL}/api/orders/place-order`,
-            {
+        handler: async (response) => {
+          try {
+            const order = await apiFetch("/api/orders/place-order", {
               method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${token}`,
-              },
               body: JSON.stringify({
                 ...orderData,
                 paymentId: response.razorpay_payment_id,
-                razorpayOrderId: response.razorpay_order_id
-              })
-            }
-          );
+                razorpayOrderId: response.razorpay_order_id,
+              }),
+            });
 
-          const order = await orderRes.json();
+            await fetchCart();
 
-          await fetchCart();
-
-          navigate(`/invoice/${order.orderId}`);
-
+            navigate(`/invoice/${order.orderId}`);
+          } catch (err) {
+            console.error("Order placement failed", err);
+          }
         },
 
         prefill: {
-          contact: phone
+          contact: phone,
         },
 
         theme: {
-          color: "#16a34a"
-        }
+          color: "#16a34a",
+        },
       };
 
       new window.Razorpay(options).open();
-
     } catch (err) {
-
       console.error(err);
 
       alert("Payment failed");
-
     }
 
     setLoading(false);
   };
 
+  /* ---------------- UI ---------------- */
+
   return (
-
     <div className="max-w-4xl mx-auto px-4 py-8 pt-24">
-
       <h2 className="text-3xl font-bold mb-6">
         Checkout - <span className="text-green-600">Verdura</span>
       </h2>
 
       {cart.map((item) => (
-
         <div key={item.id} className="flex gap-4 mb-4">
-
-          <img
-            src={item.image}
-            className="w-20 h-20 object-cover"
-          />
+          <img src={item.image} className="w-20 h-20 object-cover" />
 
           <div>
             <p>{item.name}</p>
-            <p>₹ {item.price} × {item.quantity}</p>
+            <p>
+              ₹ {item.price} × {item.quantity}
+            </p>
           </div>
-
         </div>
-
       ))}
 
-      <h3 className="font-bold mb-4">
-        Total : ₹ {totalAmount}
-      </h3>
+      <h3 className="font-bold mb-4">Total : ₹ {totalAmount}</h3>
 
       <input
         value={address}
@@ -207,15 +180,10 @@ const API_BASE_URL = import.meta.env.VITE_API_URL;
         disabled={loading}
         className="bg-green-600 text-white px-6 py-3 rounded w-full"
       >
-
         {loading ? "Processing Payment..." : "Confirm Order"}
-
       </button>
-
     </div>
-
   );
-
 };
 
 export default Checkout;

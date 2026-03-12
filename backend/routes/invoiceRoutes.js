@@ -5,6 +5,9 @@ import { attachUser } from "../middleware/attachUser.js";
 
 const router = express.Router();
 
-router.get("/:id", verifyToken, attachUser, downloadInvoice);
+router.use(verifyToken, attachUser);
+
+// Download invoice
+router.get("/:id/download", downloadInvoice);
 
 export default router;

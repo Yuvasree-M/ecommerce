@@ -1,18 +1,18 @@
+// src/components/ProductsSection.jsx
 import { useEffect, useState, useContext } from "react";
-import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../../context/AuthContext";
+import { apiFetch } from "../../services/api.js";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
-const API_BASE_URL = import.meta.env.VITE_API_URL;
-
-console.log("API URL:", API_BASE_URL);
 const ProductsSection = () => {
   const [products, setProducts] = useState([]);
-  const { user } = useContext(AuthContext);
+  const { user, token } = useContext(AuthContext);
   const navigate = useNavigate();
 
   const [showLoginModal, setShowLoginModal] = useState(false);
-  const [toast, setToast] = useState("");
+  const [addingToCart, setAddingToCart] = useState({}); // per-product loading
 
   useEffect(() => {
     fetchProducts();
@@ -20,21 +20,35 @@ const ProductsSection = () => {
 
   const fetchProducts = async () => {
     try {
-      const res = await axios.get(`${API_BASE_URL}/api/products`);
-      setProducts(res.data);
+      const data = await apiFetch("/api/products");
+      setProducts(data);
     } catch (err) {
       console.error(err);
+      toast.error("Failed to load products");
     }
   };
 
-  const handleAddToCart = (product) => {
+  const handleAddToCart = async (product) => {
     if (!user) {
       setShowLoginModal(true);
       return;
     }
 
-    setToast(`${product.name} added to cart!`);
-    setTimeout(() => setToast(""), 2500);
+    setAddingToCart((prev) => ({ ...prev, [product._id]: true }));
+
+    try {
+      await apiFetch("/api/cart", {
+        method: "POST",
+        body: JSON.stringify({ productId: product._id, quantity: 1 }),
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      toast.success(`${product.name} added to cart!`);
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to add to cart");
+    } finally {
+      setAddingToCart((prev) => ({ ...prev, [product._id]: false }));
+    }
   };
 
   const handleLoginRedirect = () => {
@@ -43,7 +57,8 @@ const ProductsSection = () => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto py-20 px-6">
+    <div className="max-w-7xl mx-auto py-20 px-6 relative">
+      <ToastContainer position="top-right" autoClose={3000} />
       <h2 className="text-4xl font-bold text-center mb-12 text-green-800">
         Our Products
       </h2>
@@ -65,21 +80,19 @@ const ProductsSection = () => {
 
               <button
                 onClick={() => handleAddToCart(p)}
-                className="mt-4 px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-xl shadow-lg transition transform hover:scale-105"
+                disabled={addingToCart[p._id]}
+                className={`mt-4 px-6 py-3 text-white font-semibold rounded-xl shadow-lg transition transform hover:scale-105 ${
+                  addingToCart[p._id]
+                    ? "bg-gray-400 cursor-not-allowed"
+                    : "bg-green-600 hover:bg-green-700"
+                }`}
               >
-                Add to Cart
+                {addingToCart[p._id] ? "Adding..." : "Add to Cart"}
               </button>
             </div>
           </div>
         ))}
       </div>
-
-      {/* Toast */}
-      {toast && (
-        <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 bg-green-600 text-white px-6 py-3 rounded-full shadow-lg z-50 animate-fade-in">
-          {toast}
-        </div>
-      )}
 
       {/* Login Modal */}
       {showLoginModal && (
