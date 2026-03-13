@@ -18,12 +18,13 @@ import invoiceRoutes from "./routes/invoiceRoutes.js";
 dotenv.config();
 
 const app = express();
-
 app.use(cors({
-  origin: "http://localhost:5173",  // ← change from "*"
+  origin: [
+    "http://localhost:5173",
+    "https://ecommerce-pi-nine-47.vercel.app"
+  ],
   credentials: true
-}));
-app.use(express.json());
+}));use(express.json());
 
 app.use(logger);
 
