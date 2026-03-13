@@ -11,15 +11,19 @@ router.post("/", async (req, res) => {
   }
 
   try {
-const transporter = nodemailer.createTransport({
-  host: "smtp.gmail.com",
-  port: 465,
-  secure: true,  // use SSL
-  auth: {
-    user: process.env.ADMIN_EMAIL,
-    pass: process.env.EMAIL_PASSWORD,
-  },
-});
+    const transporter = nodemailer.createTransport({
+      host: "smtp.gmail.com",
+      port: 587,          // try 587 instead of 465
+      secure: false,      // false for 587
+      requireTLS: true,   // force TLS
+      auth: {
+        user: process.env.ADMIN_EMAIL,
+        pass: process.env.EMAIL_PASSWORD,
+      },
+      tls: {
+        rejectUnauthorized: false,  // bypass SSL issues on cloud
+      },
+    });
 
     // 📩 Email to Admin
     await transporter.sendMail({
