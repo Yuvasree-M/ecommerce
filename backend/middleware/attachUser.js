@@ -1,22 +1,25 @@
-import { db } from "../config/firebase.js";
+import { db } from "../config/firebase.js"; // ← THIS WAS MISSING
 
 export const attachUser = async (req, res, next) => {
   try {
     if (!req.user) return res.status(401).json({ message: "User not found" });
 
+    const { phone = "", address = "" } = req.body;
     const userRef = db.collection("users").doc(req.user.uid);
-    const doc = await userRef.get();
+    const docSnap = await userRef.get();
 
-    if (!doc.exists) {
+    if (!docSnap.exists) {
       await userRef.set({
-        name: req.user.name || "",
+        name: req.user.name || req.body.name || "",
         email: req.user.email,
+        phone,
+        address,
         role: "USER",
         createdAt: new Date(),
       });
     }
 
-    const userData = doc.exists ? doc.data() : { role: "USER", name: req.user.name };
+    const userData = docSnap.exists ? docSnap.data() : { role: "USER", name: req.user.name };
     req.user.role = userData.role || "USER";
     req.user.name = userData.name || req.user.name;
 

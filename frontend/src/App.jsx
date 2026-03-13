@@ -7,6 +7,7 @@ import Navbar from "./components/Navbar";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Loader from "./components/Loader";
 import ScrollToTop from "./components/ScrollToTop";
+import HomeRedirect from "./components/HomeRedirect";
 
 /* -------- Lazy Loaded Pages -------- */
 
@@ -26,6 +27,7 @@ const AllOrders = React.lazy(() => import("./pages/AllOrders"));
 
 const Login = React.lazy(() => import("./pages/Login"));
 const Register = React.lazy(() => import("./pages/Register"));
+const Contact = React.lazy(() => import("./components/home/Contact"));
 
 /* -------- App -------- */
 
@@ -33,27 +35,21 @@ function App() {
   return (
     <BrowserRouter>
 
-      {/* Scroll to top when route changes */}
       <ScrollToTop />
-
-      {/* Navbar */}
       <Navbar />
 
-      {/* Page Loader while lazy loading */}
       <Suspense fallback={<Loader />}>
-
         <Routes>
 
           {/* -------- Public Routes -------- */}
 
-          <Route path="/" element={<Home />} />
+          {/* Redirects logged-in users away from landing page */}
+          <Route path="/" element={<HomeRedirect />} />
 
           <Route path="/products" element={<ProductList />} />
-
+          <Route path="/contact" element={<Contact />} />
           <Route path="/login" element={<Login />} />
-
           <Route path="/register" element={<Register />} />
-
 
           {/* -------- Protected User Routes -------- */}
 
@@ -111,7 +107,6 @@ function App() {
             }
           />
 
-
           {/* -------- Admin Routes -------- */}
 
           <Route
@@ -142,10 +137,8 @@ function App() {
           />
 
         </Routes>
-
       </Suspense>
 
-      {/* Toast Notifications */}
       <ToastContainer
         position="top-center"
         autoClose={3000}

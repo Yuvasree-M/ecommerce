@@ -3,13 +3,12 @@ import { db } from "../config/firebase.js";
 // Handles registration after token verification & attachUser
 export const registerUser = async (req, res) => {
   try {
-    const { uid, name, email, role } = req.user;
-    const { phone = "", address = "" } = req.body;
-
+    const { uid, email, role } = req.user;
+   const { phone = "", address = "", name = "" } = req.body; // ← read name from body
     const userRef = db.collection("users").doc(uid);
-    const doc = await userRef.get();
+    const docSnap = await userRef.get();
 
-    if (!doc.exists) {
+    if (!docSnap.exists) {
       await userRef.set({
         name,
         email,
@@ -18,7 +17,9 @@ export const registerUser = async (req, res) => {
         role: role || "USER",
         createdAt: new Date(),
       });
-      console.log("User created:", uid);
+    } else {
+      // Doc was pre-created by attachUser — update the missing fields
+      await userRef.update({name, phone, address });
     }
 
     res.status(200).json({ message: "User registered successfully" });

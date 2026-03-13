@@ -12,7 +12,7 @@ import cartRoutes from "./routes/cartRoutes.js";
 import orderRoutes from "./routes/orderRoutes.js";
 import paymentRoutes from "./routes/paymentRoutes.js";
 import transactionRoutes from "./routes/transactionRoutes.js";
-import contactRoutes from "./routes/contact.js";
+import contactRoutes from "./routes/contactRoutes.js";
 import invoiceRoutes from "./routes/invoiceRoutes.js";
 
 dotenv.config();
@@ -20,7 +20,8 @@ dotenv.config();
 const app = express();
 
 app.use(cors({
-  origin: "*"
+  origin: "http://localhost:5173",  // ← change from "*"
+  credentials: true
 }));
 app.use(express.json());
 

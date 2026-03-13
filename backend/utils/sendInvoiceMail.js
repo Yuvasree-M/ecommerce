@@ -3,13 +3,15 @@ import fs from "fs";
 
 export const sendInvoiceMail = async (email, invoicePath, order) => {
   try {
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: process.env.ADMIN_EMAIL,
-        pass: process.env.EMAIL_PASSWORD,
-      },
-    });
+const transporter = nodemailer.createTransport({
+  host: "smtp.gmail.com",
+  port: 465,
+  secure: true,  // use SSL
+  auth: {
+    user: process.env.ADMIN_EMAIL,
+    pass: process.env.EMAIL_PASSWORD,
+  },
+});
 
     const itemsHTML = order.items
       .map(

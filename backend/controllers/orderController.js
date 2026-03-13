@@ -1,5 +1,8 @@
 import { db } from "../config/firebase.js";
-import shortid from "shortid";
+import { generateInvoice } from "../utils/generateInvoice.js";
+import { sendInvoiceMail } from "../utils/sendInvoiceMail.js";
+import path from "path";
+import os from "os";
 
 // Place order
 export const placeOrder = async (req, res) => {
@@ -52,6 +55,20 @@ export const placeOrder = async (req, res) => {
 
     await db.collection("carts").doc(userId).set({ items: [] });
 
+    // Send invoice email — non-blocking, don't fail the order if email fails
+    const savedOrder = {
+      items: itemsWithDetails,
+      totalAmount,
+      address,
+      phone,
+      status: "ORDER_PLACED",
+    };
+    const invoicePath = path.join(os.tmpdir(), `invoice-${orderRef.id}.pdf`);
+
+    generateInvoice(savedOrder, orderRef.id, invoicePath)
+      .then(() => sendInvoiceMail(req.user.email, invoicePath, savedOrder))
+      .catch(err => console.error("Invoice email failed:", err));
+
     res.status(201).json({ message: "Order placed successfully", orderId: orderRef.id });
   } catch (err) {
     console.error(err);
@@ -67,6 +84,7 @@ export const getOrders = async (req, res) => {
       .get();
     const orders = snapshot.docs
       .map(doc => ({ id: doc.id, ...doc.data() }))
+      .filter(order => !order.deletedByUser)
       .sort((a, b) => b.createdAt.toDate() - a.createdAt.toDate());
     res.json(orders);
   } catch (err) {
@@ -75,7 +93,7 @@ export const getOrders = async (req, res) => {
   }
 };
 
-// In orderController.js
+// Get order by ID
 export const getOrderById = async (req, res) => {
   try {
     const { id } = req.params;
@@ -86,7 +104,6 @@ export const getOrderById = async (req, res) => {
 
     const order = { id: orderDoc.id, ...orderDoc.data() };
 
-    // Only allow access if user owns the order or is admin
     if (req.user.role !== "ADMIN" && order.userId !== req.user.uid)
       return res.status(403).json({ message: "Access denied" });
 
@@ -104,7 +121,11 @@ export const getAllOrders = async (req, res) => {
     const orders = await Promise.all(snapshot.docs.map(async doc => {
       const data = doc.data();
       const userSnap = await db.collection("users").doc(data.userId).get();
-      return { id: doc.id, ...data, userName: userSnap.exists ? userSnap.data().name : "Unknown" };
+      return {
+        id: doc.id,
+        ...data,
+        userName: userSnap.exists ? userSnap.data().name : "Unknown",
+      };
     }));
     orders.sort((a, b) => b.createdAt.toDate() - a.createdAt.toDate());
     res.json(orders);
@@ -119,9 +140,13 @@ export const updateOrderStatus = async (req, res) => {
   try {
     const { status } = req.body;
     const allowed = ["ORDER_PLACED", "APPROVED", "SHIPPED", "DELIVERED", "REJECTED"];
-    if (!allowed.includes(status)) return res.status(400).json({ message: "Invalid status" });
+    if (!allowed.includes(status))
+      return res.status(400).json({ message: "Invalid status" });
 
-    await db.collection("orders").doc(req.params.id).update({ status, updatedAt: new Date() });
+    await db.collection("orders").doc(req.params.id).update({
+      status,
+      updatedAt: new Date(),
+    });
     res.json({ message: "Order status updated" });
   } catch (err) {
     console.error(err);
