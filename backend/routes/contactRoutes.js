@@ -1,10 +1,13 @@
 import express from "express";
-import SibApiV3Sdk from "@getbrevo/brevo";
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+const SibApiV3Sdk = require("sib-api-v3-sdk");
 
 const router = express.Router();
 
+const defaultClient = SibApiV3Sdk.ApiClient.instance;
+defaultClient.authentications["api-key"].apiKey = process.env.BREVO_API_KEY;
 const apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
-apiInstance.authentications["apiKey"].apiKey = process.env.BREVO_API_KEY;
 
 router.post("/", async (req, res) => {
   const { name, email, message } = req.body;
