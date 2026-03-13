@@ -1,7 +1,15 @@
-import { Resend } from "resend";
+import nodemailer from "nodemailer";
 import fs from "fs";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const transporter = nodemailer.createTransport({
+  host: "smtp-relay.brevo.com",
+  port: 587,
+  secure: false,
+  auth: {
+    user: process.env.BREVO_LOGIN,
+    pass: process.env.BREVO_SMTP_KEY,
+  },
+});
 
 export const sendInvoiceMail = async (email, invoicePath, order) => {
   try {
@@ -49,9 +57,7 @@ export const sendInvoiceMail = async (email, invoicePath, order) => {
             <h3>Total: Rs. ${order.totalAmount}</h3>
           </div>
 
-          <p style="margin-top:30px;">
-            Your invoice PDF is attached with this email.
-          </p>
+          <p style="margin-top:30px;">Your invoice PDF is attached with this email.</p>
 
           <p style="margin-top:30px;">
             Regards,<br>
@@ -67,17 +73,15 @@ export const sendInvoiceMail = async (email, invoicePath, order) => {
     </div>
     `;
 
-    const pdfBuffer = fs.readFileSync(invoicePath);
-
-    await resend.emails.send({
-      from: "Verdura Organic Store <onboarding@resend.dev>",
+    await transporter.sendMail({
+      from: `"Verdura Organic Store" <${process.env.ADMIN_EMAIL}>`,
       to: email,
       subject: "Your Verdura Order Invoice",
       html: htmlTemplate,
       attachments: [
         {
           filename: "invoice.pdf",
-          content: pdfBuffer,
+          path: invoicePath,
         },
       ],
     });

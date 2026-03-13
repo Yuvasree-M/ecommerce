@@ -1,8 +1,17 @@
 import express from "express";
-import { Resend } from "resend";
+import nodemailer from "nodemailer";
 
 const router = express.Router();
-const resend = new Resend(process.env.RESEND_API_KEY);
+
+const transporter = nodemailer.createTransport({
+  host: "smtp-relay.brevo.com",
+  port: 587,
+  secure: false,
+  auth: {
+    user: process.env.BREVO_LOGIN,
+    pass: process.env.BREVO_SMTP_KEY,
+  },
+});
 
 router.post("/", async (req, res) => {
   const { name, email, message } = req.body;
@@ -13,20 +22,18 @@ router.post("/", async (req, res) => {
 
   try {
     // Email to Admin
-    await resend.emails.send({
-      from: "Verdura Contact <onboarding@resend.dev>",
+    await transporter.sendMail({
+      from: `"Verdura Contact" <${process.env.ADMIN_EMAIL}>`,
       to: process.env.ADMIN_EMAIL,
       replyTo: email,
       subject: `Contact Request from ${name} - Verdura`,
       html: `
       <div style="font-family: Arial; background:#f4f6f5; padding:40px">
         <div style="max-width:600px;margin:auto;background:white;border-radius:12px;overflow:hidden;box-shadow:0 6px 20px rgba(0,0,0,0.08)">
-          
           <div style="background:#166534;color:white;padding:20px;text-align:center">
             <h2 style="margin:0">Verdura</h2>
             <p style="margin:5px 0 0">New Contact Request</p>
           </div>
-
           <div style="padding:30px">
             <table style="width:100%;border-collapse:collapse">
               <tr>
@@ -43,49 +50,35 @@ router.post("/", async (req, res) => {
               </tr>
             </table>
           </div>
-
           <div style="background:#f9fafb;padding:15px;text-align:center;font-size:13px;color:#6b7280">
             Message sent from Verdura Contact Form
           </div>
-
         </div>
       </div>
       `,
     });
 
     // Auto Reply to User
-    await resend.emails.send({
-      from: "Verdura Support <onboarding@resend.dev>",
+    await transporter.sendMail({
+      from: `"Verdura Support" <${process.env.ADMIN_EMAIL}>`,
       to: email,
       subject: "Thank you for contacting Verdura",
       html: `
       <div style="font-family: Arial; background:#f4f6f5; padding:40px">
         <div style="max-width:600px;margin:auto;background:white;border-radius:12px;overflow:hidden;box-shadow:0 6px 20px rgba(0,0,0,0.08)">
-          
           <div style="background:#166534;color:white;padding:20px;text-align:center">
             <h2 style="margin:0">Verdura</h2>
           </div>
-
           <div style="padding:30px">
             <h3 style="color:#166534">Hello ${name},</h3>
-            <p>
-              Thank you for contacting <b>Verdura</b>.
-              We have received your message and our team will respond shortly.
-            </p>
-            <p style="margin-top:20px">
-              If your request is urgent, feel free to reply to this email.
-            </p>
+            <p>Thank you for contacting <b>Verdura</b>. We have received your message and our team will respond shortly.</p>
+            <p style="margin-top:20px">If your request is urgent, feel free to reply to this email.</p>
             <br>
-            <p>
-              Best regards,<br>
-              <b>Verdura Support Team</b>
-            </p>
+            <p>Best regards,<br><b>Verdura Support Team</b></p>
           </div>
-
           <div style="background:#f9fafb;padding:15px;text-align:center;font-size:13px;color:#6b7280">
             &copy; ${new Date().getFullYear()} Verdura. All rights reserved.
           </div>
-
         </div>
       </div>
       `,
