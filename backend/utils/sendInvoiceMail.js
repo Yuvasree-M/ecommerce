@@ -1,15 +1,8 @@
-import nodemailer from "nodemailer";
+import * as Brevo from "@getbrevo/brevo";
 import fs from "fs";
 
-const transporter = nodemailer.createTransport({
-  host: "smtp-relay.brevo.com",
-  port: 587,
-  secure: false,
-  auth: {
-    user: process.env.BREVO_LOGIN,
-    pass: process.env.BREVO_SMTP_KEY,
-  },
-});
+const apiInstance = new Brevo.TransactionalEmailsApi();
+apiInstance.authentications["apiKey"].apiKey = process.env.BREVO_API_KEY;
 
 export const sendInvoiceMail = async (email, invoicePath, order) => {
   try {
@@ -73,18 +66,26 @@ export const sendInvoiceMail = async (email, invoicePath, order) => {
     </div>
     `;
 
-    await transporter.sendMail({
-      from: `"Verdura Organic Store" <${process.env.ADMIN_EMAIL}>`,
-      to: email,
-      subject: "Your Verdura Order Invoice",
-      html: htmlTemplate,
-      attachments: [
-        {
-          filename: "invoice.pdf",
-          path: invoicePath,
-        },
-      ],
-    });
+    // Read PDF and convert to base64 for attachment
+    const pdfBuffer = fs.readFileSync(invoicePath);
+    const pdfBase64 = pdfBuffer.toString("base64");
+
+    const sendSmtpEmail = new Brevo.SendSmtpEmail();
+    sendSmtpEmail.subject = "Your Verdura Order Invoice";
+    sendSmtpEmail.htmlContent = htmlTemplate;
+    sendSmtpEmail.sender = {
+      name: "Verdura Organic Store",
+      email: process.env.ADMIN_EMAIL,
+    };
+    sendSmtpEmail.to = [{ email }];
+    sendSmtpEmail.attachment = [
+      {
+        content: pdfBase64,
+        name: "invoice.pdf",
+      },
+    ];
+
+    await apiInstance.sendTransacEmail(sendSmtpEmail);
 
     console.log("Invoice email sent to:", email);
 

@@ -1,17 +1,10 @@
 import express from "express";
-import nodemailer from "nodemailer";
+import * as Brevo from "@getbrevo/brevo";
 
 const router = express.Router();
 
-const transporter = nodemailer.createTransport({
-  host: "smtp-relay.brevo.com",
-  port: 587,
-  secure: false,
-  auth: {
-    user: process.env.BREVO_LOGIN,
-    pass: process.env.BREVO_SMTP_KEY,
-  },
-});
+const apiInstance = new Brevo.TransactionalEmailsApi();
+apiInstance.authentications["apiKey"].apiKey = process.env.BREVO_API_KEY;
 
 router.post("/", async (req, res) => {
   const { name, email, message } = req.body;
@@ -22,12 +15,12 @@ router.post("/", async (req, res) => {
 
   try {
     // Email to Admin
-    await transporter.sendMail({
-      from: `"Verdura Contact" <${process.env.ADMIN_EMAIL}>`,
-      to: process.env.ADMIN_EMAIL,
-      replyTo: email,
-      subject: `Contact Request from ${name} - Verdura`,
-      html: `
+    const adminMail = new Brevo.SendSmtpEmail();
+    adminMail.subject = `Contact Request from ${name} - Verdura`;
+    adminMail.sender = { name: "Verdura Contact", email: process.env.ADMIN_EMAIL };
+    adminMail.to = [{ email: process.env.ADMIN_EMAIL }];
+    adminMail.replyTo = { email };
+    adminMail.htmlContent = `
       <div style="font-family: Arial; background:#f4f6f5; padding:40px">
         <div style="max-width:600px;margin:auto;background:white;border-radius:12px;overflow:hidden;box-shadow:0 6px 20px rgba(0,0,0,0.08)">
           <div style="background:#166534;color:white;padding:20px;text-align:center">
@@ -55,15 +48,16 @@ router.post("/", async (req, res) => {
           </div>
         </div>
       </div>
-      `,
-    });
+    `;
+
+    await apiInstance.sendTransacEmail(adminMail);
 
     // Auto Reply to User
-    await transporter.sendMail({
-      from: `"Verdura Support" <${process.env.ADMIN_EMAIL}>`,
-      to: email,
-      subject: "Thank you for contacting Verdura",
-      html: `
+    const userMail = new Brevo.SendSmtpEmail();
+    userMail.subject = "Thank you for contacting Verdura";
+    userMail.sender = { name: "Verdura Support", email: process.env.ADMIN_EMAIL };
+    userMail.to = [{ email }];
+    userMail.htmlContent = `
       <div style="font-family: Arial; background:#f4f6f5; padding:40px">
         <div style="max-width:600px;margin:auto;background:white;border-radius:12px;overflow:hidden;box-shadow:0 6px 20px rgba(0,0,0,0.08)">
           <div style="background:#166534;color:white;padding:20px;text-align:center">
@@ -81,8 +75,9 @@ router.post("/", async (req, res) => {
           </div>
         </div>
       </div>
-      `,
-    });
+    `;
+
+    await apiInstance.sendTransacEmail(userMail);
 
     res.json({ success: true });
 
