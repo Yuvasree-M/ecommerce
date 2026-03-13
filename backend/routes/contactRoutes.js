@@ -1,9 +1,9 @@
 import express from "express";
-import * as Brevo from "@getbrevo/brevo";
+import SibApiV3Sdk from "@getbrevo/brevo";
 
 const router = express.Router();
 
-const apiInstance = new Brevo.TransactionalEmailsApi();
+const apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
 apiInstance.authentications["apiKey"].apiKey = process.env.BREVO_API_KEY;
 
 router.post("/", async (req, res) => {
@@ -15,7 +15,7 @@ router.post("/", async (req, res) => {
 
   try {
     // Email to Admin
-    const adminMail = new Brevo.SendSmtpEmail();
+    const adminMail = new SibApiV3Sdk.SendSmtpEmail();
     adminMail.subject = `Contact Request from ${name} - Verdura`;
     adminMail.sender = { name: "Verdura Contact", email: process.env.ADMIN_EMAIL };
     adminMail.to = [{ email: process.env.ADMIN_EMAIL }];
@@ -53,7 +53,7 @@ router.post("/", async (req, res) => {
     await apiInstance.sendTransacEmail(adminMail);
 
     // Auto Reply to User
-    const userMail = new Brevo.SendSmtpEmail();
+    const userMail = new SibApiV3Sdk.SendSmtpEmail();
     userMail.subject = "Thank you for contacting Verdura";
     userMail.sender = { name: "Verdura Support", email: process.env.ADMIN_EMAIL };
     userMail.to = [{ email }];
