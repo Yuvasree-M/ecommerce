@@ -24,7 +24,9 @@ app.use(cors({
     "https://ecommerce-pi-nine-47.vercel.app"
   ],
   credentials: true
-}));use(express.json());
+}));
+
+app.use(express.json());
 
 app.use(logger);
 
