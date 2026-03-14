@@ -5,10 +5,6 @@ const SibApiV3Sdk = require("sib-api-v3-sdk");
 
 const router = express.Router();
 
-const defaultClient = SibApiV3Sdk.ApiClient.instance;
-defaultClient.authentications["api-key"].apiKey = process.env.BREVO_API_KEY;
-const apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
-
 router.post("/", async (req, res) => {
   const { name, email, message } = req.body;
 
@@ -16,7 +12,20 @@ router.post("/", async (req, res) => {
     return res.status(400).json({ error: "All fields are required" });
   }
 
+  // Debug: confirm API key is loaded
+  const apiKey = process.env.BREVO_API_KEY;
+  console.log("BREVO_API_KEY:", apiKey ? `${apiKey.slice(0, 10)}...` : "NOT SET");
+
+  if (!apiKey) {
+    return res.status(500).json({ error: "BREVO_API_KEY not set in environment" });
+  }
+
   try {
+    // Set API key fresh on each request
+    const defaultClient = SibApiV3Sdk.ApiClient.instance;
+    defaultClient.authentications["api-key"].apiKey = apiKey;
+    const apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
+
     // Email to Admin
     const adminMail = new SibApiV3Sdk.SendSmtpEmail();
     adminMail.subject = `Contact Request from ${name} - Verdura`;
@@ -32,18 +41,9 @@ router.post("/", async (req, res) => {
           </div>
           <div style="padding:30px">
             <table style="width:100%;border-collapse:collapse">
-              <tr>
-                <td style="padding:10px;font-weight:bold">Name</td>
-                <td style="padding:10px">${name}</td>
-              </tr>
-              <tr style="background:#f9fafb">
-                <td style="padding:10px;font-weight:bold">Email</td>
-                <td style="padding:10px">${email}</td>
-              </tr>
-              <tr>
-                <td style="padding:10px;font-weight:bold">Message</td>
-                <td style="padding:10px">${message}</td>
-              </tr>
+              <tr><td style="padding:10px;font-weight:bold">Name</td><td style="padding:10px">${name}</td></tr>
+              <tr style="background:#f9fafb"><td style="padding:10px;font-weight:bold">Email</td><td style="padding:10px">${email}</td></tr>
+              <tr><td style="padding:10px;font-weight:bold">Message</td><td style="padding:10px">${message}</td></tr>
             </table>
           </div>
           <div style="background:#f9fafb;padding:15px;text-align:center;font-size:13px;color:#6b7280">
@@ -52,7 +52,6 @@ router.post("/", async (req, res) => {
         </div>
       </div>
     `;
-
     await apiInstance.sendTransacEmail(adminMail);
 
     // Auto Reply to User
@@ -79,13 +78,16 @@ router.post("/", async (req, res) => {
         </div>
       </div>
     `;
-
     await apiInstance.sendTransacEmail(userMail);
 
     res.json({ success: true });
 
   } catch (err) {
     console.error("Contact mail error:", err.message);
+    // Log full Brevo error response
+    if (err.response) {
+      console.error("Brevo error response:", JSON.stringify(err.response.body, null, 2));
+    }
     res.status(500).json({ error: "Failed to send email", detail: err.message });
   }
 });
