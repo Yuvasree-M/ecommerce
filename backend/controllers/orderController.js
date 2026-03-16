@@ -8,7 +8,9 @@ import os from "os";
 export const placeOrder = async (req, res) => {
   try {
     const { cartItems, address, phone, paymentId, razorpayOrderId } = req.body;
-    const userId = req.user.uid;
+   const userId = req.user.uid;
+const userName = req.user.name;
+const userEmail = req.user.email;
 
     if (!cartItems || cartItems.length === 0)
       return res.status(400).json({ message: "Cart is empty" });
@@ -30,20 +32,21 @@ export const placeOrder = async (req, res) => {
 
     const totalAmount = itemsWithDetails.reduce((sum, i) => sum + i.price * i.quantity, 0);
 
-    const orderRef = await db.collection("orders").add({
-      userId,
-      items: itemsWithDetails,
-      totalAmount,
-      address,
-      phone,
-      paymentId,
-      razorpayOrderId,
-      status: "ORDER_PLACED",
-      deletedByUser: false,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    });
-
+const orderRef = await db.collection("orders").add({
+  userId,
+  name: userName,
+  email: userEmail,
+  items: itemsWithDetails,
+  totalAmount,
+  address,
+  phone,
+  paymentId,
+  razorpayOrderId,
+  status: "ORDER_PLACED",
+  deletedByUser: false,
+  createdAt: new Date(),
+  updatedAt: new Date(),
+});
     await db.collection("transactions").add({
       userId,
       orderId: orderRef.id,
@@ -56,13 +59,15 @@ export const placeOrder = async (req, res) => {
     await db.collection("carts").doc(userId).set({ items: [] });
 
     // Send invoice email — non-blocking, don't fail the order if email fails
-    const savedOrder = {
-      items: itemsWithDetails,
-      totalAmount,
-      address,
-      phone,
-      status: "ORDER_PLACED",
-    };
+ const savedOrder = {
+  name: userName,
+  email: userEmail,
+  items: itemsWithDetails,
+  totalAmount,
+  address,
+  phone,
+  status: "ORDER_PLACED",
+};
     const invoicePath = path.join(os.tmpdir(), `invoice-${orderRef.id}.pdf`);
 
     generateInvoice(savedOrder, orderRef.id, invoicePath)
@@ -101,8 +106,18 @@ export const getOrderById = async (req, res) => {
 
     if (!orderDoc.exists)
       return res.status(404).json({ message: "Order not found" });
+const data = orderDoc.data();
 
-    const order = { id: orderDoc.id, ...orderDoc.data() };
+const order = {
+  id: orderDoc.id,
+  name: data.name,
+  email: data.email,
+  phone: data.phone,
+  address: data.address,
+  totalAmount: data.totalAmount,
+  items: data.items || [],
+  status: data.status
+};
 
     if (req.user.role !== "ADMIN" && order.userId !== req.user.uid)
       return res.status(403).json({ message: "Access denied" });
