@@ -136,7 +136,7 @@ const Orders = () => {
 
   const getDeliveryMessage = (status) => {
 
-    switch (status?.toLowerCase()) {
+    switch (status) {
 
       case "APPROVED":
         return "Estimated delivery in 4 - 5 days";
