@@ -7,7 +7,7 @@ import { FaMapMarkerAlt, FaPhone, FaShoppingCart } from "react-icons/fa";
 
 const Checkout = () => {
   const { token } = useContext(AuthContext);
-  const { cart } = useContext(CartContext);
+  const { cart, clearCart } = useContext(CartContext);
   const navigate = useNavigate();
 
   const [name, setName] = useState("");
@@ -15,6 +15,8 @@ const Checkout = () => {
   const [address, setAddress] = useState("");
   const [phone, setPhone] = useState("");
   const [loading, setLoading] = useState(false);
+
+  /* ---------------- TOTAL ---------------- */
 
   const totalAmount = cart.reduce(
     (sum, item) => sum + item.price * item.quantity,
@@ -27,6 +29,7 @@ const Checkout = () => {
     const fetchProfile = async () => {
       try {
         const data = await apiFetch("/api/users/profile");
+
         setName(data.name || "");
         setEmail(data.email || "");
         setAddress(data.address || "");
@@ -63,7 +66,10 @@ const Checkout = () => {
     };
 
     try {
-      const data = await apiFetch("/api/payment/razorpay/order", {
+
+      /* CREATE RAZORPAY ORDER */
+
+      const payment = await apiFetch("/api/payment/razorpay/order", {
         method: "POST",
         body: JSON.stringify({
           amount: totalAmount,
@@ -71,17 +77,20 @@ const Checkout = () => {
       });
 
       const options = {
-        key: data.key,
-        amount: data.amount,
-        currency: data.currency,
-        order_id: data.id,
+        key: payment.key,
+        amount: payment.amount,
+        currency: payment.currency,
+        order_id: payment.id,
 
         name: "Verdura",
         description: "Order Payment",
 
         handler: async (response) => {
           try {
-            const order = await apiFetch("/api/payment/order/save", {
+
+            /* SAVE ORDER */
+
+            const savedOrder = await apiFetch("/api/payment/order/save", {
               method: "POST",
               body: JSON.stringify({
                 ...orderData,
@@ -90,11 +99,19 @@ const Checkout = () => {
               }),
             });
 
-            navigate(`/invoice/${order.orderId}`, {
-              state: { order },
+            /* CLEAR CART */
+
+            await clearCart();
+
+            /* NAVIGATE TO INVOICE */
+
+            navigate(`/invoice/${savedOrder.orderId}`, {
+              state: { order: savedOrder },
             });
+
           } catch (err) {
-            console.error("Order placement failed", err);
+            console.error("Order save failed", err);
+            alert("Order placement failed");
           }
         },
 
@@ -109,7 +126,13 @@ const Checkout = () => {
         },
       };
 
-      new window.Razorpay(options).open();
+      const rzp = new window.Razorpay(options);
+      rzp.open();
+
+      rzp.on("payment.failed", function () {
+        alert("Payment failed. Please try again.");
+      });
+
     } catch (err) {
       console.error(err);
       alert("Payment failed");
@@ -165,6 +188,7 @@ const Checkout = () => {
 
               <div className="relative">
                 <FaPhone className="absolute top-4 left-3 text-gray-400"/>
+
                 <input
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
@@ -174,6 +198,7 @@ const Checkout = () => {
               </div>
 
             </div>
+
           </div>
 
           {/* CART ITEMS */}
