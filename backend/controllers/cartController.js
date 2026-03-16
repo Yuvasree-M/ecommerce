@@ -1,7 +1,6 @@
 import { db } from "../config/firebase.js";
 
 // Add to cart
-// 🛒 Add or Update Cart
 export const addToCart = async (req, res) => {
   try {
     const { productId, quantity } = req.body;
@@ -14,7 +13,7 @@ export const addToCart = async (req, res) => {
 
     const existing = cartItems.find(i => i.productId === productId);
     if (existing) {
-      // ✅ Set the new quantity directly
+    
       existing.quantity = quantity;
     } else {
       cartItems.push({ productId, quantity });

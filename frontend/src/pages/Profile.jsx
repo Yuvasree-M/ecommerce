@@ -245,27 +245,25 @@ const Profile = () => {
 
   const isAdmin = role === "ADMIN";
 
-  /* ---- SAVE HANDLERS ---- */
+
 
   const handleSave = async (field, value) => {
     if (field === "password") {
       const { currentPassword, newPassword } = value;
 
-      // Re-authenticate first
       const credential = EmailAuthProvider.credential(user.email, currentPassword);
       await reauthenticateWithCredential(auth.currentUser, credential);
 
-      // Update password
+
       await updatePassword(auth.currentUser, newPassword);
 
     } else {
-      // Update phone or address via API
+
       await apiFetch("/api/users/profile", {
         method: "PUT",
         body: JSON.stringify({ [field]: value }),
       });
 
-      // Update local context so UI reflects change immediately
       setUser(prev => ({ ...prev, [field]: value }));
     }
 
@@ -273,7 +271,6 @@ const Profile = () => {
     setTimeout(() => setSuccessMsg(""), 3000);
   };
 
-  /* ---- INFO ROWS ---- */
 
   const InfoRow = ({ icon, label, value, field }) => (
     <div className="flex items-center justify-between bg-green-50 rounded-2xl p-4 border border-green-100">
@@ -305,7 +302,6 @@ const Profile = () => {
   return (
     <div className="min-h-screen bg-[#f0f9e8] pt-24 pb-12 px-4">
 
-      {/* Back button */}
       <div className="max-w-2xl mx-auto mb-5">
         <button
           onClick={() => navigate(-1)}
@@ -316,7 +312,6 @@ const Profile = () => {
         </button>
       </div>
 
-      {/* Success toast */}
       {successMsg && (
         <div className="max-w-2xl mx-auto mb-4">
           <div className="bg-green-100 border border-green-300 text-green-700 px-4 py-3 rounded-xl text-sm font-semibold flex items-center gap-2">
@@ -329,7 +324,7 @@ const Profile = () => {
       <div className="max-w-2xl mx-auto">
         <div className="bg-white rounded-3xl shadow-xl overflow-hidden">
 
-          {/* Banner */}
+        
           <div className="relative h-32 bg-gradient-to-br from-green-700 via-green-600 to-emerald-500">
             <div className="absolute -top-6 -right-6 w-32 h-32 rounded-full bg-white/10" />
             <div className="absolute top-4 right-16 w-16 h-16 rounded-full bg-white/10" />
@@ -350,7 +345,6 @@ const Profile = () => {
 
           <div className="px-6 pb-8">
 
-            {/* Avatar + actions row */}
             <div className="flex justify-between items-end -mt-12 mb-6">
               <div className="relative">
                 <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-green-600 to-emerald-500 flex items-center justify-center shadow-lg border-4 border-white">
@@ -372,7 +366,6 @@ const Profile = () => {
               </div>
             </div>
 
-            {/* Name + email */}
             <div className="mb-6">
               <h1 className="text-2xl font-black text-gray-900 tracking-tight mb-1">
                 {user.name}
@@ -385,7 +378,7 @@ const Profile = () => {
 
             <div className="border-t border-gray-100 mb-6" />
 
-            {/* Info rows */}
+ 
             <div className="space-y-3">
               <InfoRow
                 icon={<FaEnvelope className="text-green-600" size={13} />}
@@ -412,8 +405,6 @@ const Profile = () => {
                 field="password"
               />
             </div>
-
-            {/* Admin section */}
             {isAdmin && (
               <>
                 <div className="border-t border-gray-100 my-6" />
@@ -453,7 +444,6 @@ const Profile = () => {
         </p>
       </div>
 
-      {/* Edit Modal */}
       {editField && (
         <EditModal
           field={editField}

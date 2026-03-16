@@ -1,17 +1,16 @@
 import { db } from "../config/firebase.js";
 
-/* -----------------------------
-   Helper: Safe Date Conversion
-------------------------------*/
+  // Helper: Safe Date Conversion
+
 const getDate = (value) => {
   if (!value) return new Date(0);
   if (typeof value.toDate === "function") return value.toDate();
   return new Date(value);
 };
 
-/* -----------------------------
-   Admin → Get All Transactions
-------------------------------*/
+
+ //  Admin → Get All Transactions
+
 export const getAllTransactions = async (req, res) => {
   try {
     console.log("Admin fetching all transactions");
@@ -23,7 +22,6 @@ export const getAllTransactions = async (req, res) => {
       ...doc.data(),
     }));
 
-    // Sort newest first
     transactions.sort((a, b) => getDate(b.createdAt) - getDate(a.createdAt));
 
     res.json(transactions);
@@ -33,9 +31,8 @@ export const getAllTransactions = async (req, res) => {
   }
 };
 
-/* -----------------------------
-   User → Get Their Transactions
-------------------------------*/
+   //User → Get Their Transactions
+
 export const getUserTransactions = async (req, res) => {
   try {
     console.log("Fetching transactions for user:", req.user);
@@ -52,7 +49,6 @@ export const getUserTransactions = async (req, res) => {
       ...doc.data(),
     }));
 
-    // Sort newest first
     transactions.sort((a, b) => getDate(b.createdAt) - getDate(a.createdAt));
 
     res.json(transactions);

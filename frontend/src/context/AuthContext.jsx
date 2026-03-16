@@ -11,8 +11,6 @@ export const AuthProvider = ({ children }) => {
   const [role, setRole] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // isLoggedIn is purely derived from Firebase session — no localStorage
-  // This means a new browser/tab/incognito always starts fresh correctly
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   useEffect(() => {
@@ -48,11 +46,9 @@ export const AuthProvider = ({ children }) => {
             setRole("USER");
           }
 
-          // Firebase confirmed a valid session exists
           setIsLoggedIn(true);
 
         } else {
-          // No Firebase session — new browser, incognito, or logged out
           setUser(null);
           setRole(null);
           setToken(null);
@@ -72,8 +68,6 @@ export const AuthProvider = ({ children }) => {
     return () => unsubscribe();
   }, []);
 
-  // Show nothing until Firebase has resolved the auth state
-  // This prevents ANY flicker of wrong navbar on refresh or new tab
   const value = useMemo(() => ({
     user,
     setUser,

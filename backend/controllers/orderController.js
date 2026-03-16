@@ -7,10 +7,19 @@ import os from "os";
 // Place order
 export const placeOrder = async (req, res) => {
   try {
-    const { cartItems, address, phone, paymentId, razorpayOrderId } = req.body;
-   const userId = req.user.uid;
-const userName = req.user.name;
-const userEmail = req.user.email;
+    const { cartItems, address, phone, paymentId, razorpayOrderId, name, email } = req.body;
+
+    const userId = req.user.uid;
+    let userName  = name  || req.user.name  || "";
+    let userEmail = email || req.user.email || "";
+    if (!userName || !userEmail) {
+      const userDoc = await db.collection("users").doc(userId).get();
+      if (userDoc.exists) {
+        const userData = userDoc.data();
+        userName  = userName  || userData.name  || "";
+        userEmail = userEmail || userData.email || "";
+      }
+    }
 
     if (!cartItems || cartItems.length === 0)
       return res.status(400).json({ message: "Cart is empty" });
@@ -32,21 +41,22 @@ const userEmail = req.user.email;
 
     const totalAmount = itemsWithDetails.reduce((sum, i) => sum + i.price * i.quantity, 0);
 
-const orderRef = await db.collection("orders").add({
-  userId,
-  name: userName,
-  email: userEmail,
-  items: itemsWithDetails,
-  totalAmount,
-  address,
-  phone,
-  paymentId,
-  razorpayOrderId,
-  status: "ORDER_PLACED",
-  deletedByUser: false,
-  createdAt: new Date(),
-  updatedAt: new Date(),
-});
+    const orderRef = await db.collection("orders").add({
+      userId,
+      name: userName,
+      email: userEmail,
+      items: itemsWithDetails,
+      totalAmount,
+      address,
+      phone,
+      paymentId,
+      razorpayOrderId,
+      status: "ORDER_PLACED",
+      deletedByUser: false,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+
     await db.collection("transactions").add({
       userId,
       orderId: orderRef.id,
@@ -58,23 +68,25 @@ const orderRef = await db.collection("orders").add({
 
     await db.collection("carts").doc(userId).set({ items: [] });
 
-    // Send invoice email — non-blocking, don't fail the order if email fails
- const savedOrder = {
-  name: userName,
-  email: userEmail,
-  items: itemsWithDetails,
-  totalAmount,
-  address,
-  phone,
-  status: "ORDER_PLACED",
-};
+    // Send invoice email — non-blocking
+    const savedOrder = {
+      name: userName,
+      email: userEmail,
+      items: itemsWithDetails,
+      totalAmount,
+      address,
+      phone,
+      status: "ORDER_PLACED",
+    };
+
     const invoicePath = path.join(os.tmpdir(), `invoice-${orderRef.id}.pdf`);
 
     generateInvoice(savedOrder, orderRef.id, invoicePath)
-      .then(() => sendInvoiceMail(req.user.email, invoicePath, savedOrder))
+      .then(() => sendInvoiceMail(userEmail, invoicePath, savedOrder))
       .catch(err => console.error("Invoice email failed:", err));
 
     res.status(201).json({ message: "Order placed successfully", orderId: orderRef.id });
+
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: err.message });
@@ -106,21 +118,22 @@ export const getOrderById = async (req, res) => {
 
     if (!orderDoc.exists)
       return res.status(404).json({ message: "Order not found" });
-const data = orderDoc.data();
 
-const order = {
-  id: orderDoc.id,
-  name: data.name,
-  email: data.email,
-  phone: data.phone,
-  address: data.address,
-  totalAmount: data.totalAmount,
-  items: data.items || [],
-  status: data.status
-};
-
-    if (req.user.role !== "ADMIN" && order.userId !== req.user.uid)
+    const data = orderDoc.data();
+    if (req.user.role !== "ADMIN" && data.userId !== req.user.uid)
       return res.status(403).json({ message: "Access denied" });
+
+    const order = {
+      id: orderDoc.id,
+      userId: data.userId,
+      name: data.name,
+      email: data.email,
+      phone: data.phone,
+      address: data.address,
+      totalAmount: data.totalAmount,
+      items: data.items || [],
+      status: data.status,
+    };
 
     res.json(order);
   } catch (err) {

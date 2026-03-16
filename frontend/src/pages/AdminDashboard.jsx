@@ -1,808 +1,590 @@
-import { useState, useEffect, useContext } from "react";
+import { useState, useEffect, useContext, useMemo, useCallback } from "react";
 import { AuthContext } from "../context/AuthContext";
 import { apiFetch } from "../services/api";
+
+const STATUS_CONFIG = {
+  ORDER_PLACED: { label: "Placed",    bg: "bg-orange-100",  text: "text-orange-700",  dot: "bg-orange-400",  border: "border-orange-200" },
+  APPROVED:     { label: "Approved",  bg: "bg-blue-100",    text: "text-blue-700",    dot: "bg-blue-500",    border: "border-blue-200"   },
+  SHIPPED:      { label: "Shipped",   bg: "bg-purple-100",  text: "text-purple-700",  dot: "bg-purple-500",  border: "border-purple-200" },
+  DELIVERED:    { label: "Delivered", bg: "bg-green-100",   text: "text-green-700",   dot: "bg-green-500",   border: "border-green-200"  },
+  REJECTED:     { label: "Rejected",  bg: "bg-red-100",     text: "text-red-600",     dot: "bg-red-400",     border: "border-red-200"    },
+  SUCCESS:      { label: "Success",   bg: "bg-green-100",   text: "text-green-700",   dot: "bg-green-500",   border: "border-green-200"  },
+  FAILED:       { label: "Failed",    bg: "bg-red-100",     text: "text-red-600",     dot: "bg-red-400",     border: "border-red-200"    },
+};
+const sc = (s) => STATUS_CONFIG[s] || { label: s, bg: "bg-gray-100", text: "text-gray-500", dot: "bg-gray-400", border: "border-gray-200" };
+
+
+const NEXT_ACTION = {
+  ORDER_PLACED: { next: "APPROVED", label: "✓ Approve", cls: "bg-orange-500 hover:bg-orange-600 shadow-orange-200" },
+  APPROVED:     { next: "SHIPPED",  label: "⬆ Ship",    cls: "bg-blue-500 hover:bg-blue-600 shadow-blue-200"     },
+  SHIPPED:      { next: "DELIVERED",label: "✔ Deliver", cls: "bg-purple-600 hover:bg-purple-700 shadow-purple-200" },
+};
+
+const PER_PAGE = 8;
 
 const AdminDashboard = () => {
   const { token } = useContext(AuthContext);
 
-  const [activeTab, setActiveTab] = useState("orders");
-  const [orders, setOrders] = useState([]);
-  const [transactions, setTransactions] = useState([]);
-  const [users, setUsers] = useState([]);
-
+  const [activeTab,     setActiveTab]     = useState("orders");
+  const [orders,        setOrders]        = useState([]);
+  const [transactions,  setTransactions]  = useState([]);
+  const [users,         setUsers]         = useState([]);
   const [productsCount, setProductsCount] = useState(0);
-  const [adminCount, setAdminCount] = useState(0);
-  const [userCount, setUserCount] = useState(0);
-  const [ordersByStatus, setOrdersByStatus] = useState({});
-  const [updatingOrderId, setUpdatingOrderId] = useState(null);
+  const [loading,       setLoading]       = useState(true);
+  const [updatingId,    setUpdatingId]    = useState(null);
+  const [modal,         setModal]         = useState(null);
+  const [search,        setSearch]        = useState("");
+  const [statusFilter,  setStatusFilter]  = useState("ALL");
+  const [orderPage,     setOrderPage]     = useState(1);
+  const [txPage,        setTxPage]        = useState(1);
 
-  /* ---------------- FETCH USERS ---------------- */
 
-  const fetchUsers = async () => {
+  const loadAll = useCallback(async () => {
+    setLoading(true);
     try {
-      const data = await apiFetch("/api/users");
-
-      setUsers(data);
-      setAdminCount(data.filter((u) => u.role === "ADMIN").length);
-      setUserCount(data.filter((u) => u.role === "USER").length);
+      const [u, o, p, t] = await Promise.all([
+        apiFetch("/api/users"),
+        apiFetch("/api/orders/all"),
+        apiFetch("/api/products"),
+        apiFetch("/api/transactions"),
+      ]);
+      setUsers(u || []);
+      setOrders(o || []);
+      setProductsCount((p || []).length);
+      setTransactions(t || []);
     } catch (err) {
-      console.error("Failed to fetch users", err);
+      console.error("Dashboard load failed", err);
+    } finally {
+      setLoading(false);
     }
-  };
+  }, []);
 
-  /* ---------------- FETCH ORDERS ---------------- */
+  useEffect(() => { if (token) loadAll(); }, [token]);
 
-  const fetchOrders = async () => {
-    try {
-      const data = await apiFetch("/api/orders/all");
+ 
+  const adminCount = useMemo(() => users.filter(u => u.role === "ADMIN").length, [users]);
+  const userCount  = useMemo(() => users.filter(u => u.role === "USER").length, [users]);
+  const revenue    = useMemo(() =>
+    orders.filter(o => o.status === "DELIVERED")
+          .reduce((s, o) => s + (o.totalAmount || 0), 0), [orders]);
 
-      setOrders(data);
+  const ordersByStatus = useMemo(() => {
+    const obj = {};
+    orders.forEach(o => { obj[o.status] = (obj[o.status] || 0) + 1; });
+    return obj;
+  }, [orders]);
 
-      const statusCount = {};
+  const getUserName = useCallback((uid) => {
+    const u = users.find(u => u.id === uid);
+    return u ? u.name : (uid?.slice(0, 10) + "…");
+  }, [users]);
 
-      data.forEach((o) => {
-        statusCount[o.status] = (statusCount[o.status] || 0) + 1;
-      });
+  const filteredOrders = useMemo(() => {
+    return orders
+      .filter(o => o.status !== "DELIVERED")
+      .filter(o => statusFilter === "ALL" || o.status === statusFilter)
+      .filter(o => !search ||
+        o.id.toLowerCase().includes(search.toLowerCase()) ||
+        getUserName(o.userId).toLowerCase().includes(search.toLowerCase()));
+  }, [orders, statusFilter, search, getUserName]);
 
-      setOrdersByStatus(statusCount);
-    } catch (err) {
-      console.error("Failed to fetch orders", err);
-    }
-  };
+  const orderTotalPages = Math.max(1, Math.ceil(filteredOrders.length / PER_PAGE));
+  const pagedOrders = useMemo(() => {
+    const s = (orderPage - 1) * PER_PAGE;
+    return filteredOrders.slice(s, s + PER_PAGE);
+  }, [filteredOrders, orderPage]);
 
-  /* ---------------- FETCH PRODUCTS ---------------- */
-
-  const fetchProducts = async () => {
-    try {
-      const data = await apiFetch("/api/products");
-      setProductsCount(data.length);
-    } catch (err) {
-      console.error("Failed to fetch products", err);
-    }
-  };
-
-  /* ---------------- FETCH TRANSACTIONS ---------------- */
-
-  const fetchTransactions = async () => {
-    try {
-      const data = await apiFetch("/api/transactions");
-      setTransactions(data);
-    } catch (err) {
-      console.error("Failed to fetch transactions", err);
-    }
-  };
-
-  /* ---------------- UPDATE ORDER STATUS ---------------- */
+  const txTotalPages = Math.max(1, Math.ceil(transactions.length / PER_PAGE));
+  const pagedTx = useMemo(() => {
+    const s = (txPage - 1) * PER_PAGE;
+    return transactions.slice(s, s + PER_PAGE);
+  }, [transactions, txPage]);
 
   const updateStatus = async (orderId, status) => {
+    setUpdatingId(orderId);
     try {
-      setUpdatingOrderId(orderId);
-
-    await apiFetch(`/api/orders/${orderId}/status`, {
-  method: "PATCH",
-  body: JSON.stringify({ status }),
-});
-      
-
-      await fetchOrders();
+      await apiFetch(`/api/orders/${orderId}/status`, {
+        method: "PATCH",
+        body: JSON.stringify({ status }),
+      });
+      setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status } : o));
     } catch (err) {
-      console.error("Failed to update order status", err);
+      console.error("Status update failed", err);
     } finally {
-      setUpdatingOrderId(null);
+      setUpdatingId(null);
     }
   };
 
-  /* ---------------- USER NAME ---------------- */
-
-  const getUserName = (userId) => {
-    const user = users.find((u) => u.id === userId);
-    return user ? user.name : userId;
-  };
-
-  /* ---------------- STATUS COLOR ---------------- */
-
-  const statusColor = (status) => {
-    switch (status) {
-
-      case "APPROVED":
-        return "bg-blue-100 text-blue-700";
-      case "SHIPPED":
-        return "bg-indigo-100 text-indigo-700";
-      case "DELIVERED":
-        return "bg-green-100 text-green-700";
-      case "CANCELLED":
-        return "bg-red-100 text-red-700";
-      default:
-        return "bg-gray-100 text-gray-700";
-    }
-  };
-
-  /* ---------------- ACTION BUTTONS ---------------- */
-
-  const renderActionButton = (order) => {
-    if (updatingOrderId === order.id) return "Updating...";
-
-    switch (order.status) {
-      case "ORDER_PLACED":
-        return (
-          <button
-            onClick={() => updateStatus(order.id, "APPROVED")}
-            className="px-4 py-1 rounded-lg bg-green-600 text-white hover:bg-green-700"
-          >
-            Approve
-          </button>
-        );
-
-      case "APPROVED":
-        return (
-          <button
-            onClick={() => updateStatus(order.id, "SHIPPED")}
-            className="px-4 py-1 rounded-lg bg-blue-600 text-white hover:bg-blue-700"
-          >
-            Ship
-          </button>
-        );
-
-      case "SHIPPED":
-        return (
-          <button
-            onClick={() => updateStatus(order.id, "DELIVERED")}
-            className="px-4 py-1 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700"
-          >
-            Deliver
-          </button>
-        );
-
-      case "DELIVERED":
-        return <span className="text-green-600 font-semibold">Completed</span>;
-
-      case "CANCELLED":
-        return <span className="text-red-600 font-semibold">Cancelled</span>;
-
-      default:
-        return null;
-    }
-  };
-
-  /* ---------------- LOAD DATA ---------------- */
-
-  useEffect(() => {
-    if (token) {
-      fetchUsers();
-      fetchOrders();
-      fetchProducts();
-      fetchTransactions();
-    }
-  }, [token]);
-
-  return (
-    <div className="min-h-screen bg-[#f0f9e8] dark:bg-gray-900 p-6 container mx-auto pt-24 space-y-10">
-      <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100">
-        Admin Dashboard
-      </h1>
-
-      {/* STATS */}
-
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
-        <StatCard title="Admins" value={adminCount} />
-        <StatCard title="Users" value={userCount} />
-        <StatCard title="Products" value={productsCount} />
-        <StatCard title="Orders" value={orders.length} />
-        <StatCard title="Transactions" value={transactions.length} />
-      </div>
-
-      {/* ORDER STATUS SUMMARY */}
-
-      <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow border">
-        <h3 className="font-semibold mb-4 text-gray-700 dark:text-gray-200">
-          Orders by Status
-        </h3>
-
-        <div className="flex flex-wrap gap-3">
-          {Object.entries(ordersByStatus).map(([status, count]) => (
-            <span
-              key={status}
-              className="px-4 py-2 bg-indigo-100 text-indigo-700 rounded-full text-sm"
-            >
-              {status}: {count}
-            </span>
+  if (loading) return (
+    <div className="min-h-screen bg-green-50 pt-24 px-6">
+      <div className="max-w-7xl mx-auto space-y-5">
+        <div className="h-8 w-52 bg-green-100 animate-pulse rounded-lg" />
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+          {[...Array(6)].map((_, i) => (
+            <div key={i} className="h-24 bg-green-100 animate-pulse rounded-xl" />
           ))}
         </div>
+        <div className="h-14 bg-green-100 animate-pulse rounded-xl" />
+        <div className="h-96 bg-green-100 animate-pulse rounded-xl" />
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="min-h-screen bg-green-50 pt-24 pb-16 px-4 md:px-6">
+      <div className="max-w-7xl mx-auto space-y-6">
+
+        {/* ── TOP BAR ── */}
+        <div className="flex items-start justify-between">
+          <div>
+              <h2 className="text-3xl font-bold mb-6 text-green-800 dark:text-gray-100">
+      Admin Dashboard
+      </h2>
+
+  
+          </div>
+          <button
+            onClick={loadAll}
+            className="bg-green-600 hover:bg-green-700 text-white text-sm font-bold px-4 py-2 rounded-lg transition-all hover:-translate-y-0.5 shadow shadow-green-200"
+          >
+            ↻ Refresh
+          </button>
+        </div>
+
+        {/* ── STAT CARDS — white with green border ── */}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+          {[
+            { label: "Admins",       value: adminCount,          accent: "border-t-4 border-t-green-800",   val: "text-green-800" },
+            { label: "Users",        value: userCount,           accent: "border-t-4 border-t-green-700",   val: "text-green-700" },
+            { label: "Products",     value: productsCount,       accent: "border-t-4 border-t-orange-500",  val: "text-orange-600" },
+            { label: "Orders",       value: orders.length,       accent: "border-t-4 border-t-blue-500",    val: "text-blue-600"   },
+            { label: "Transactions", value: transactions.length, accent: "border-t-4 border-t-purple-500",  val: "text-purple-600" },
+            { label: "Revenue",      value: `₹${revenue}`,       accent: "border-t-4 border-t-green-500",   val: "text-green-600"  },
+          ].map((s, i) => (
+            <div
+              key={i}
+              className={`bg-white border border-green-100 ${s.accent} rounded-xl p-4 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-200`}
+            >
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">{s.label}</p>
+              <p className={`text-2xl font-extrabold ${s.val}`}>{s.value}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* ── ORDER STATUS SUMMARY ── */}
+        <div className="bg-white border border-green-200 rounded-xl px-5 py-3 flex flex-wrap items-center gap-3 shadow-sm">
+          <span className="text-xs font-extrabold text-white bg-green-700 px-3 py-1 rounded-full uppercase tracking-wider">
+            Order Breakdown
+          </span>
+          {Object.entries(ordersByStatus).map(([status, count]) => {
+            const cfg = sc(status);
+            return (
+              <span
+                key={status}
+                className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border ${cfg.bg} ${cfg.text} ${cfg.border}`}
+              >
+                <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
+                {cfg.label}: <strong>{count}</strong>
+              </span>
+            );
+          })}
+        </div>
+
+        {/* ── TABS ── */}
+        <div className="flex gap-2">
+          {[
+            { id: "orders",       label: "📦 Orders"      },
+            { id: "transactions", label: "💳 Transactions" },
+          ].map(t => (
+            <button
+              key={t.id}
+              onClick={() => setActiveTab(t.id)}
+              className={`px-5 py-2 rounded-lg text-sm font-bold border-2 transition-all ${
+                activeTab === t.id
+                  ? "bg-green-700 text-white border-green-700"
+                  : "bg-white text-green-700 border-green-200 hover:bg-green-50"
+              }`}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+
+        {/* ══ ORDERS TABLE ══ */}
+        {activeTab === "orders" && (
+          <div className="space-y-3">
+            {/* Toolbar */}
+            <div className="flex flex-wrap gap-3 items-center">
+              <input
+                placeholder="Search order ID or customer…"
+                value={search}
+                onChange={e => { setSearch(e.target.value); setOrderPage(1); }}
+                className="border-2 border-green-200 rounded-lg px-3 py-2 text-sm text-green-900 outline-none focus:border-green-500 w-64 bg-white"
+              />
+              <select
+                value={statusFilter}
+                onChange={e => { setStatusFilter(e.target.value); setOrderPage(1); }}
+                className="border-2 border-green-200 rounded-lg px-3 py-2 text-sm text-green-900 bg-white cursor-pointer focus:border-green-500"
+              >
+                <option value="ALL">All Statuses</option>
+                <option value="ORDER_PLACED">Placed</option>
+                <option value="APPROVED">Approved</option>
+                <option value="SHIPPED">Shipped</option>
+              </select>
+              <span className="bg-green-600 text-white text-xs font-bold px-3 py-1.5 rounded-full">
+                {filteredOrders.length} orders
+              </span>
+            </div>
+
+            {/* Table */}
+            <div className="bg-white border border-green-200 rounded-xl overflow-hidden shadow-sm">
+              <table className="w-full">
+                <thead className="bg-green-800 text-green-100">
+                  <tr>
+                    {["Order ID", "Customer", "Status", "Items", "Amount", "Action"].map(h => (
+                      <th key={h} className="px-4 py-3 text-left text-xs font-extrabold uppercase tracking-widest whitespace-nowrap">
+                        {h}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {pagedOrders.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="text-center py-10 text-green-300 text-sm">
+                        No orders found
+                      </td>
+                    </tr>
+                  ) : pagedOrders.map(order => {
+                    const cfg = sc(order.status);
+                    const act = NEXT_ACTION[order.status];
+                    return (
+                      <tr key={order.id} className="hover:bg-gray-50 transition-colors">
+                        <td className="px-4 py-3">
+                          <button
+                            onClick={() => setModal({ type: "order", data: order })}
+                            className="font-mono text-xs font-bold text-green-600 hover:text-green-800 hover:underline"
+                          >
+                            #{order.id.slice(0, 12)}…
+                          </button>
+                        </td>
+                        <td className="px-4 py-3 text-sm font-semibold text-gray-800">
+                          {getUserName(order.userId)}
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold border ${cfg.bg} ${cfg.text} ${cfg.border}`}>
+                            <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
+                            {cfg.label}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-500">
+                          {order.items?.length || 0} items
+                        </td>
+                        <td className="px-4 py-3 text-sm font-bold text-green-700">
+                          ₹{order.totalAmount || 0}
+                        </td>
+                        <td className="px-4 py-3">
+                          {updatingId === order.id ? (
+                            <span className="text-xs text-gray-400 italic">Updating…</span>
+                          ) : act ? (
+                            <button
+                              onClick={() => updateStatus(order.id, act.next)}
+                              className={`${act.cls} text-white text-xs font-bold px-3 py-1.5 rounded-lg shadow transition-all hover:-translate-y-0.5`}
+                            >
+                              {act.label}
+                            </button>
+                          ) : (
+                            <span className="text-gray-300 text-sm">—</span>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            <Pagination page={orderPage} total={orderTotalPages} onChange={setOrderPage} count={filteredOrders.length} />
+          </div>
+        )}
+
+        {/* ══ TRANSACTIONS TABLE ══ */}
+        {activeTab === "transactions" && (
+          <div className="space-y-3">
+            <div className="bg-white border border-green-200 rounded-xl overflow-hidden shadow-sm">
+              <table className="w-full">
+                <thead className="bg-green-800 text-green-100">
+                  <tr>
+                    {["Transaction ID", "Customer", "Order ID", "Type", "Status"].map(h => (
+                      <th key={h} className="px-4 py-3 text-left text-xs font-extrabold uppercase tracking-widest whitespace-nowrap">
+                        {h}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {pagedTx.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="text-center py-10 text-green-300 text-sm">
+                        No transactions found
+                      </td>
+                    </tr>
+                  ) : pagedTx.map(tx => {
+                    const cfg = sc(tx.transactionStatus);
+                    return (
+                      <tr key={tx.id} className="hover:bg-gray-50 transition-colors">
+                        <td className="px-4 py-3">
+                          <button
+                            onClick={() => setModal({ type: "transaction", data: tx })}
+                            className="font-mono text-xs font-bold text-purple-600 hover:text-purple-800 hover:underline"
+                          >
+                            #{tx.id.slice(0, 12)}…
+                          </button>
+                        </td>
+                        <td className="px-4 py-3 text-sm font-semibold text-gray-800">
+                          {getUserName(tx.userId)}
+                        </td>
+                        <td className="px-4 py-3">
+                          <button
+                            onClick={() => {
+                              const o = orders.find(o => o.id === tx.orderId);
+                              if (o) setModal({ type: "order", data: o });
+                            }}
+                            className="font-mono text-xs font-bold text-blue-600 hover:text-blue-800 hover:underline"
+                          >
+                            #{tx.orderId?.slice(0, 12)}…
+                          </button>
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-blue-50 text-blue-600 border border-blue-100">
+                            {tx.transactionType}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold border ${cfg.bg} ${cfg.text} ${cfg.border}`}>
+                            <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
+                            {cfg.label}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            <Pagination page={txPage} total={txTotalPages} onChange={setTxPage} count={transactions.length} />
+          </div>
+        )}
+
       </div>
 
-      {/* TABS */}
-
-      <div className="flex gap-4">
-        <TabButton
-          active={activeTab === "orders"}
-          onClick={() => setActiveTab("orders")}
-        >
-          Orders
-        </TabButton>
-
-        <TabButton
-          active={activeTab === "transactions"}
-          onClick={() => setActiveTab("transactions")}
-        >
-          Transactions
-        </TabButton>
-      </div>
-
-      {/* ORDERS TABLE */}
-
-      {activeTab === "orders" && (
-        <div className="overflow-x-auto">
-          <table className="min-w-full bg-white dark:bg-gray-800 rounded-xl shadow">
-            <thead className="bg-green-700 text-white">
-              <tr>
-                <th className="px-4 py-3 text-left">Order ID</th>
-                <th className="px-4 py-3 text-left">User</th>
-                <th className="px-4 py-3 text-left">Status</th>
-                <th className="px-4 py-3 text-left">Items</th>
-                <th className="px-4 py-3 text-left">Action</th>
-              </tr>
-            </thead>
-
-           
-          <tbody>
-  {orders
-    .filter(order => order.status !== "DELIVERED")
-    .map((order) => (
-                <tr key={order.id} className="border-b hover:bg-gray-50">
-                  <td className="px-4 py-3">{order.id}</td>
-
-                  <td className="px-4 py-3">{getUserName(order.userId)}</td>
-
-                  <td className="px-4 py-3">
-                    <span
-                      className={`px-2 py-1 text-xs rounded-full ${statusColor(
-                        order.status
-                      )}`}
-                    >
-                      {order.status}
-                    </span>
-                  </td>
-
-                  <td className="px-4 py-3">{order.items.length}</td>
-
-                  <td className="px-4 py-3">
-                    {renderActionButton(order)}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-
-      {/* TRANSACTIONS */}
-
-      {activeTab === "transactions" && (
-        <div className="overflow-x-auto">
-          <table className="min-w-full bg-white dark:bg-gray-800 rounded-xl shadow">
-            <thead className="bg-green-900 text-white">
-              <tr>
-                <th className="px-4 py-3 text-left">Transaction ID</th>
-                <th className="px-4 py-3 text-left">User</th>
-                <th className="px-4 py-3 text-left">Order</th>
-                <th className="px-4 py-3 text-left">Payment</th>
-                <th className="px-4 py-3 text-left">Status</th>
-              </tr>
-            </thead>
-
-            <tbody>
-              {transactions.map((tx) => (
-                <tr key={tx.id} className="border-b hover:bg-gray-50">
-                  <td className="px-4 py-3">{tx.id}</td>
-                  <td className="px-4 py-3">{getUserName(tx.userId)}</td>
-                  <td className="px-4 py-3">{tx.orderId}</td>
-                  <td className="px-4 py-3">{tx.transactionType}</td>
-                  <td className="px-4 py-3">{tx.transactionStatus}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+      {/* ══ MODAL ══ */}
+      {modal && (
+        <DetailModal
+          modal={modal}
+          onClose={() => setModal(null)}
+          getUserName={getUserName}
+          updateStatus={updateStatus}
+          updatingId={updatingId}
+        />
       )}
     </div>
   );
 };
 
-/* ---------------- REUSABLE COMPONENTS ---------------- */
+/* ══════════════════════════════════════════════════════
+   PAGINATION
+══════════════════════════════════════════════════════ */
+const Pagination = ({ page, total, onChange, count }) => {
+  if (total <= 1) return null;
 
-const StatCard = ({ title, value }) => (
-  <div className="bg-white dark:bg-gray-800 rounded-xl shadow p-6 text-center border hover:shadow-lg transition">
-    <p className="text-gray-500">{title}</p>
-    <h2 className="text-2xl font-bold">{value}</h2>
-  </div>
-);
+  const pages = [];
+  for (let i = 1; i <= total; i++) {
+    if (i === 1 || i === total || (i >= page - 1 && i <= page + 1)) {
+      pages.push(i);
+    } else if (pages[pages.length - 1] !== "…") {
+      pages.push("…");
+    }
+  }
 
-const TabButton = ({ active, onClick, children }) => (
-  <button
-    onClick={onClick}
-    className={`px-6 py-2 rounded-lg font-medium ${
-      active
-        ? "bg-green-600 text-white"
-        : "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200"
-    }`}
-  >
-    {children}
-  </button>
-);
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
+      <span className="text-xs font-semibold text-gray-400">
+        Page {page} of {total} · {count} total
+      </span>
+      <div className="flex items-center gap-1.5">
+        <button
+          onClick={() => onChange(page - 1)}
+          disabled={page === 1}
+          className="border-2 border-green-200 bg-white text-green-700 text-xs font-bold px-3 py-1.5 rounded-lg disabled:opacity-30 disabled:cursor-not-allowed hover:bg-green-50 transition-colors"
+        >
+          ‹ Prev
+        </button>
+
+        {pages.map((p, i) =>
+          p === "…" ? (
+            <span key={`e-${i}`} className="text-gray-300 px-1 text-sm select-none">…</span>
+          ) : (
+            <button
+              key={p}
+              onClick={() => onChange(p)}
+              className={`text-xs font-bold px-3 py-1.5 rounded-lg border-2 transition-colors min-w-[34px] ${
+                p === page
+                  ? "bg-green-700 text-white border-green-700"
+                  : "bg-white text-green-700 border-green-200 hover:bg-green-50"
+              }`}
+            >
+              {p}
+            </button>
+          )
+        )}
+
+        <button
+          onClick={() => onChange(page + 1)}
+          disabled={page === total}
+          className="border-2 border-green-200 bg-white text-green-700 text-xs font-bold px-3 py-1.5 rounded-lg disabled:opacity-30 disabled:cursor-not-allowed hover:bg-green-50 transition-colors"
+        >
+          Next ›
+        </button>
+      </div>
+    </div>
+  );
+};
+
+/* ══════════════════════════════════════════════════════
+   DETAIL MODAL
+══════════════════════════════════════════════════════ */
+const DetailModal = ({ modal, onClose, getUserName, updateStatus, updatingId }) => {
+  const { type, data } = modal;
+  const isOrder = type === "order";
+  const cfg = sc(data.status || data.transactionStatus);
+
+  return (
+    <div
+      className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+      onClick={onClose}
+    >
+      <div
+        className="bg-white rounded-2xl w-full max-w-lg max-h-[88vh] overflow-y-auto shadow-2xl border border-gray-100"
+        style={{ animation: "modalIn 0.2s ease both" }}
+        onClick={e => e.stopPropagation()}
+      >
+        <style>{`@keyframes modalIn{from{opacity:0;transform:scale(0.95)}to{opacity:1;transform:scale(1)}}`}</style>
+
+        {/* Modal Header */}
+        <div className="sticky top-0 bg-white z-10 flex items-center justify-between px-5 py-4 border-b border-gray-100">
+          <div className="flex items-center gap-3">
+            <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg ${isOrder ? "bg-orange-50" : "bg-purple-50"}`}>
+              {isOrder ? "📦" : "💳"}
+            </div>
+            <div>
+              <h2 className="text-base font-extrabold text-gray-800">
+                {isOrder ? "Order Details" : "Transaction Details"}
+              </h2>
+              <p className="font-mono text-xs text-gray-400">#{data.id}</p>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="w-8 h-8 flex items-center justify-center rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-500 font-bold text-sm transition-colors"
+          >
+            ✕
+          </button>
+        </div>
+
+        {/* Status Banner */}
+        <div className={`flex items-center gap-2 px-5 py-2.5 border-b border-gray-100 ${cfg.bg}`}>
+          <span className={`w-2 h-2 rounded-full ${cfg.dot}`} />
+          <span className={`text-xs font-bold ${cfg.text}`}>{cfg.label}</span>
+        </div>
+
+        <div className="p-5 space-y-4">
+
+          {/* ORDER BODY */}
+          {isOrder && (
+            <>
+              <div className="grid grid-cols-2 gap-3">
+                {[
+                  { label: "Customer", value: data.name  || getUserName(data.userId), color: "border-t-orange-400"  },
+                  { label: "Email",    value: data.email || "—",                      color: "border-t-blue-400"    },
+                  { label: "Phone",    value: data.phone || "—",                      color: "border-t-purple-400"  },
+                  { label: "Amount",   value: `₹${data.totalAmount || 0}`,            color: "border-t-green-400"   },
+                ].map((f, i) => (
+                  <div key={i} className={`bg-gray-50 border border-gray-100 border-t-4 ${f.color} rounded-xl p-3`}>
+                    <p className="text-xs font-extrabold text-gray-400 uppercase tracking-widest mb-1">{f.label}</p>
+                    <p className="text-sm font-semibold text-gray-800 truncate">{f.value}</p>
+                  </div>
+                ))}
+              </div>
+
+              {data.address && (
+                <div className="bg-gray-50 border border-gray-100 border-t-4 border-t-teal-400 rounded-xl p-3">
+                  <p className="text-xs font-extrabold text-gray-400 uppercase tracking-widest mb-1">Delivery Address</p>
+                  <p className="text-sm font-semibold text-gray-800">{data.address}</p>
+                </div>
+              )}
+
+              <div>
+                <p className="text-xs font-extrabold text-gray-400 uppercase tracking-widest mb-2">Order Items</p>
+                <div className="space-y-2">
+                  {(data.items || []).map((item, i) => (
+                    <div key={i} className="flex items-center gap-3 bg-gray-50 border border-gray-100 rounded-xl p-3 hover:bg-orange-50 transition-colors">
+                      <img
+                        src={item.image}
+                        alt={item.name}
+                        className="w-11 h-11 rounded-lg object-cover border border-gray-200 flex-shrink-0"
+                        onError={e => e.target.style.display = "none"}
+                      />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-bold text-gray-800 truncate">{item.name}</p>
+                        <p className="text-xs text-gray-400">₹{item.price} × {item.quantity}</p>
+                      </div>
+                      <p className="text-sm font-extrabold text-green-600 whitespace-nowrap">
+                        ₹{item.price * item.quantity}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {NEXT_ACTION[data.status] && (
+                <div className="flex justify-end pt-1">
+                  <button
+                    onClick={() => updateStatus(data.id, NEXT_ACTION[data.status].next)}
+                    disabled={updatingId === data.id}
+                    className={`${NEXT_ACTION[data.status].cls} text-white text-sm font-bold px-6 py-2.5 rounded-xl shadow transition-all hover:-translate-y-0.5 disabled:opacity-50`}
+                  >
+                    {updatingId === data.id ? "Updating…" : NEXT_ACTION[data.status].label}
+                  </button>
+                </div>
+              )}
+            </>
+          )}
+
+          {/* TRANSACTION BODY */}
+          {!isOrder && (
+            <div className="grid grid-cols-2 gap-3">
+              {[
+                { label: "Transaction ID", value: data.id,                        color: "border-t-purple-400" },
+                { label: "Customer",       value: getUserName(data.userId),        color: "border-t-blue-400"   },
+                { label: "Order ID",       value: data.orderId,                   color: "border-t-orange-400" },
+                { label: "Payment Type",   value: data.transactionType,           color: "border-t-teal-400"   },
+                { label: "Status",         value: data.transactionStatus,         color: "border-t-green-400"  },
+                { label: "Razorpay ID",    value: data.transactionId || "—",      color: "border-t-gray-300"   },
+              ].map((f, i) => (
+                <div key={i} className={`bg-gray-50 border border-gray-100 border-t-4 ${f.color} rounded-xl p-3`}>
+                  <p className="text-xs font-extrabold text-gray-400 uppercase tracking-widest mb-1">{f.label}</p>
+                  <p className="text-sm font-semibold text-gray-800 break-all">{f.value}</p>
+                </div>
+              ))}
+            </div>
+          )}
+
+        </div>
+      </div>
+    </div>
+  );
+};
 
 export default AdminDashboard;
-
-// import { useState, useEffect, useContext, useMemo } from "react";
-// import { AuthContext } from "../context/AuthContext";
-// import { apiFetch } from "../services/api";
-// import {
-//   BarChart,
-//   Bar,
-//   XAxis,
-//   YAxis,
-//   Tooltip,
-//   ResponsiveContainer,
-// } from "recharts";
-
-// /* ---------------- MAIN COMPONENT ---------------- */
-
-// const AdminDashboard = () => {
-//   const { token } = useContext(AuthContext);
-
-//   const [activeTab, setActiveTab] = useState("orders");
-
-//   const [orders, setOrders] = useState([]);
-//   const [transactions, setTransactions] = useState([]);
-//   const [users, setUsers] = useState([]);
-//   const [productsCount, setProductsCount] = useState(0);
-
-//   const [loading, setLoading] = useState(true);
-
-//   const [search, setSearch] = useState("");
-//   const [statusFilter, setStatusFilter] = useState("ALL");
-
-//   const [page, setPage] = useState(1);
-//   const rowsPerPage = 6;
-
-//   const [selectedOrder, setSelectedOrder] = useState(null);
-
-//   const [notification, setNotification] = useState(null);
-
-//   /* ---------------- LOAD DASHBOARD ---------------- */
-
-//   const loadDashboard = async () => {
-//     try {
-//       setLoading(true);
-
-//       const [usersData, ordersData, productsData, txData] = await Promise.all([
-//         apiFetch("/api/users"),
-//         apiFetch("/api/orders/all"),
-//         apiFetch("/api/products"),
-//         apiFetch("/api/transactions"),
-//       ]);
-
-//       setUsers(usersData || []);
-//       setOrders(ordersData || []);
-//       setTransactions(txData || []);
-//       setProductsCount(productsData?.length || 0);
-
-//     } catch (err) {
-//       console.error(err);
-//     } finally {
-//       setLoading(false);
-//     }
-//   };
-
-//   useEffect(() => {
-//     if (token) loadDashboard();
-//   }, [token]);
-
-//   /* ---------------- LIVE ORDER POLLING ---------------- */
-
-//   useEffect(() => {
-//     const interval = setInterval(async () => {
-//       const latest = await apiFetch("/api/orders/all");
-
-//       if (latest.length > orders.length) {
-//         setNotification("New order received!");
-//       }
-
-//       setOrders(latest);
-//     }, 15000);
-
-//     return () => clearInterval(interval);
-//   }, [orders]);
-
-//   /* ---------------- COUNTS ---------------- */
-
-//   const adminCount = useMemo(
-//     () => users.filter((u) => u.role === "ADMIN").length,
-//     [users]
-//   );
-
-//   const userCount = useMemo(
-//     () => users.filter((u) => u.role === "USER").length,
-//     [users]
-//   );
-
-//   const ordersByStatus = useMemo(() => {
-//     const obj = {};
-//     orders.forEach((o) => {
-//       obj[o.status] = (obj[o.status] || 0) + 1;
-//     });
-//     return obj;
-//   }, [orders]);
-
-//   /* ---------------- CHART DATA ---------------- */
-
-//   const chartData = useMemo(() => {
-//     return Object.entries(ordersByStatus).map(([status, value]) => ({
-//       name: status,
-//       orders: value,
-//     }));
-//   }, [ordersByStatus]);
-
-//   /* ---------------- USER NAME ---------------- */
-
-//   const getUserName = (userId) => {
-//     const user = users.find((u) => u.id === userId);
-//     return user?.name || userId;
-//   };
-
-//   /* ---------------- SEARCH + FILTER ---------------- */
-
-//   const filteredOrders = useMemo(() => {
-//     return orders.filter((o) => {
-//       const matchesSearch =
-//         o.id.toLowerCase().includes(search.toLowerCase());
-
-//       const matchesStatus =
-//         statusFilter === "ALL" || o.status === statusFilter;
-
-//       return matchesSearch && matchesStatus;
-//     });
-//   }, [orders, search, statusFilter]);
-
-//   /* ---------------- PAGINATION ---------------- */
-
-//   const paginatedOrders = useMemo(() => {
-//     const start = (page - 1) * rowsPerPage;
-//     return filteredOrders.slice(start, start + rowsPerPage);
-//   }, [filteredOrders, page]);
-
-//   const totalPages = Math.ceil(filteredOrders.length / rowsPerPage);
-
-//   /* ---------------- UPDATE STATUS ---------------- */
-
-//   const updateStatus = async (orderId, status) => {
-//     await apiFetch(`/api/orders/${orderId}/status`, {
-//       method: "PATCH",
-//       body: JSON.stringify({ status }),
-//     });
-
-//     setOrders((prev) =>
-//       prev.map((o) => (o.id === orderId ? { ...o, status } : o))
-//     );
-//   };
-
-//   /* ---------------- EXPORT CSV ---------------- */
-
-//   const exportCSV = () => {
-//     const rows = transactions.map((t) =>
-//       `${t.id},${t.userId},${t.orderId},${t.transactionType},${t.transactionStatus}`
-//     );
-
-//     const csv =
-//       "TransactionID,User,Order,PaymentType,Status\n" + rows.join("\n");
-
-//     const blob = new Blob([csv], { type: "text/csv" });
-
-//     const url = URL.createObjectURL(blob);
-
-//     const a = document.createElement("a");
-
-//     a.href = url;
-//     a.download = "transactions.csv";
-
-//     a.click();
-//   };
-
-//   if (loading) {
-//     return (
-//       <div className="flex justify-center items-center h-screen">
-//         Loading Dashboard...
-//       </div>
-//     );
-//   }
-
-//   return (
-//     <div className="p-6 container mx-auto pt-24 space-y-10">
-
-//       <h1 className="text-3xl font-bold">Admin Dashboard</h1>
-
-//       {/* Notification */}
-
-//       {notification && (
-//         <div className="bg-green-500 text-white px-4 py-2 rounded">
-//           {notification}
-//         </div>
-//       )}
-
-//       {/* Stats */}
-
-//       <div className="grid grid-cols-2 md:grid-cols-5 gap-6">
-
-//         <StatCard title="Admins" value={adminCount} />
-//         <StatCard title="Users" value={userCount} />
-//         <StatCard title="Products" value={productsCount} />
-//         <StatCard title="Orders" value={orders.length} />
-//         <StatCard title="Transactions" value={transactions.length} />
-
-//       </div>
-
-//       {/* Chart */}
-
-//       <div className="bg-white p-6 rounded shadow">
-
-//         <h3 className="mb-4 font-semibold">Orders by Status</h3>
-
-//         <ResponsiveContainer width="100%" height={300}>
-
-//           <BarChart data={chartData}>
-
-//             <XAxis dataKey="name" />
-//             <YAxis />
-//             <Tooltip />
-//             <Bar dataKey="orders" />
-
-//           </BarChart>
-
-//         </ResponsiveContainer>
-
-//       </div>
-
-//       {/* Tabs */}
-
-//       <div className="flex gap-4">
-
-//         <TabButton
-//           active={activeTab === "orders"}
-//           onClick={() => setActiveTab("orders")}
-//         >
-//           Orders
-//         </TabButton>
-
-//         <TabButton
-//           active={activeTab === "transactions"}
-//           onClick={() => setActiveTab("transactions")}
-//         >
-//           Transactions
-//         </TabButton>
-
-//       </div>
-
-//       {/* ORDERS */}
-
-//       {activeTab === "orders" && (
-//         <div className="space-y-4">
-
-//           <div className="flex gap-4">
-
-//             <input
-//               placeholder="Search Order ID"
-//               className="border p-2 rounded"
-//               value={search}
-//               onChange={(e) => setSearch(e.target.value)}
-//             />
-
-//             <select
-//               value={statusFilter}
-//               onChange={(e) => setStatusFilter(e.target.value)}
-//               className="border p-2 rounded"
-//             >
-//               <option value="ALL">All</option>
-//               <option value="ORDER_PLACED">Placed</option>
-//               <option value="APPROVED">Approved</option>
-//               <option value="SHIPPED">Shipped</option>
-//               <option value="DELIVERED">Delivered</option>
-//             </select>
-
-//           </div>
-
-//           <table className="w-full bg-white shadow rounded">
-
-//             <thead className="bg-green-700 text-white">
-//               <tr>
-//                 <th className="p-3">Order</th>
-//                 <th>User</th>
-//                 <th>Status</th>
-//                 <th>Items</th>
-//                 <th>Action</th>
-//               </tr>
-//             </thead>
-
-//             <tbody>
-
-//               {paginatedOrders.map((order) => (
-
-//                 <tr key={order.id} className="border-b hover:bg-gray-50">
-
-//                   <td
-//                     className="p-3 cursor-pointer"
-//                     onClick={() => setSelectedOrder(order)}
-//                   >
-//                     {order.id}
-//                   </td>
-
-//                   <td>{getUserName(order.userId)}</td>
-
-//                   <td>{order.status}</td>
-
-//                   <td>{order.items.length}</td>
-
-//                   <td>
-
-//                     <button
-//                       onClick={() =>
-//                         updateStatus(order.id, "APPROVED")
-//                       }
-//                       className="bg-green-600 text-white px-3 py-1 rounded"
-//                     >
-//                       Approve
-//                     </button>
-
-//                   </td>
-
-//                 </tr>
-
-//               ))}
-
-//             </tbody>
-
-//           </table>
-
-//           {/* Pagination */}
-
-//           <div className="flex gap-2">
-
-//             {Array.from({ length: totalPages }).map((_, i) => (
-
-//               <button
-//                 key={i}
-//                 onClick={() => setPage(i + 1)}
-//                 className="px-3 py-1 border rounded"
-//               >
-//                 {i + 1}
-//               </button>
-
-//             ))}
-
-//           </div>
-
-//         </div>
-//       )}
-
-//       {/* TRANSACTIONS */}
-
-//       {activeTab === "transactions" && (
-
-//         <div>
-
-//           <button
-//             onClick={exportCSV}
-//             className="mb-4 bg-blue-600 text-white px-4 py-2 rounded"
-//           >
-//             Export CSV
-//           </button>
-
-//           <table className="w-full bg-white shadow rounded">
-
-//             <thead className="bg-gray-900 text-white">
-//               <tr>
-//                 <th className="p-3">Transaction</th>
-//                 <th>User</th>
-//                 <th>Order</th>
-//                 <th>Payment</th>
-//                 <th>Status</th>
-//               </tr>
-//             </thead>
-
-//             <tbody>
-
-//               {transactions.map((t) => (
-
-//                 <tr key={t.id} className="border-b">
-
-//                   <td className="p-3">{t.id}</td>
-//                   <td>{getUserName(t.userId)}</td>
-//                   <td>{t.orderId}</td>
-//                   <td>{t.transactionType}</td>
-//                   <td>{t.transactionStatus}</td>
-
-//                 </tr>
-
-//               ))}
-
-//             </tbody>
-
-//           </table>
-
-//         </div>
-//       )}
-
-//       {/* ORDER MODAL */}
-
-//       {selectedOrder && (
-
-//         <OrderModal
-//           order={selectedOrder}
-//           onClose={() => setSelectedOrder(null)}
-//         />
-
-//       )}
-
-//     </div>
-//   );
-// };
-
-// /* ---------------- COMPONENTS ---------------- */
-
-// const StatCard = ({ title, value }) => (
-
-//   <div className="bg-white p-6 rounded shadow text-center">
-
-//     <p className="text-gray-500">{title}</p>
-//     <h2 className="text-2xl font-bold">{value}</h2>
-
-//   </div>
-
-// );
-
-// const TabButton = ({ active, onClick, children }) => (
-
-//   <button
-//     onClick={onClick}
-//     className={`px-6 py-2 rounded ${
-//       active ? "bg-green-600 text-white" : "bg-gray-200"
-//     }`}
-//   >
-//     {children}
-//   </button>
-
-// );
-
-// const OrderModal = ({ order, onClose }) => (
-
-//   <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center">
-
-//     <div className="bg-white p-6 rounded shadow w-96">
-
-//       <h3 className="font-bold mb-4">Order Details</h3>
-
-//       <p><b>ID:</b> {order.id}</p>
-//       <p><b>Status:</b> {order.status}</p>
-
-//       <h4 className="mt-4 font-semibold">Items</h4>
-
-//       {order.items.map((i, idx) => (
-
-//         <div key={idx}>
-//           {i.name} × {i.quantity}
-//         </div>
-
-//       ))}
-
-//       <button
-//         onClick={onClose}
-//         className="mt-4 bg-red-500 text-white px-4 py-2 rounded"
-//       >
-//         Close
-//       </button>
-
-//     </div>
-
-//   </div>
-
-// );
-
-// export default AdminDashboard;

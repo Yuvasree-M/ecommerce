@@ -6,7 +6,6 @@ import Home from "../pages/Home";
 const HomeRedirect = () => {
   const { isLoggedIn, role, loading } = useContext(AuthContext);
 
-  // Wait for Firebase to resolve auth state before deciding
   if (loading) return null;
 
   if (isLoggedIn) {

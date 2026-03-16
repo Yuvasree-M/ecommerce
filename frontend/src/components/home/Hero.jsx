@@ -11,7 +11,6 @@ const Hero = () => {
         backgroundPosition: "center",
       }}
     >
-      {/* Dark overlay for contrast */}
       <div className="absolute inset-0 bg-black/60"></div>
 
       <div className="relative z-10 text-white max-w-3xl px-6">

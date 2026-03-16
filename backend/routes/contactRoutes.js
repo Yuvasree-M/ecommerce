@@ -12,9 +12,7 @@ router.post("/", async (req, res) => {
     return res.status(400).json({ error: "All fields are required" });
   }
 
-  // Debug: confirm API key is loaded
   const apiKey = process.env.BREVO_API_KEY;
-  console.log("BREVO_API_KEY:", apiKey ? `${apiKey.slice(0, 10)}...` : "NOT SET");
 
   if (!apiKey) {
     return res.status(500).json({ error: "BREVO_API_KEY not set in environment" });
@@ -84,7 +82,7 @@ router.post("/", async (req, res) => {
 
   } catch (err) {
     console.error("Contact mail error:", err.message);
-    // Log full Brevo error response
+  
     if (err.response) {
       console.error("Brevo error response:", JSON.stringify(err.response.body, null, 2));
     }

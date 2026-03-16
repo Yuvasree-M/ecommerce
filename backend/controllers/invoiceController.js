@@ -6,33 +6,34 @@ import { generateInvoice } from "../utils/generateInvoice.js";
 export const downloadInvoice = async (req, res) => {
   try {
     const orderId = req.params.id;
-
     const orderDoc = await db.collection("orders").doc(orderId).get();
 
-    if (!orderDoc.exists) {
+    if (!orderDoc.exists)
       return res.status(404).json({ message: "Order not found" });
-    }
 
-    const order = orderDoc.data();
+    const data = orderDoc.data(); 
 
-    if (order.userId !== req.user.uid) {
+    if (data.userId !== req.user.uid)
       return res.status(403).json({ message: "Unauthorized" });
-    }
+
+
+    const order = {
+      name: data.name,
+      email: data.email,
+      phone: data.phone,
+      address: data.address,
+      totalAmount: data.totalAmount,
+      items: data.items || [],
+    };
 
     const tempDir = "temp";
-
-    if (!fs.existsSync(tempDir)) {
-      fs.mkdirSync(tempDir);
-    }
+    if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir);
 
     const filePath = path.join(tempDir, `invoice-${orderId}.pdf`);
-
     await generateInvoice(order, orderId, filePath);
 
     res.download(filePath, `invoice-${orderId}.pdf`, () => {
-      if (fs.existsSync(filePath)) {
-        fs.unlinkSync(filePath);
-      }
+      if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
     });
 
   } catch (err) {

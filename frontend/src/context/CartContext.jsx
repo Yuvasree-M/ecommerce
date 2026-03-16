@@ -34,9 +34,7 @@ export const CartProvider = ({ children }) => {
 
   /* ---------------- CART COUNT ---------------- */
 
-  const cartCount = useMemo(() => {
-    return cart.reduce((total, item) => total + (item.quantity || 1), 0);
-  }, [cart]);
+ const cartCount = useMemo(() => cart.length, [cart]);
 
   /* ---------------- TOTAL PRICE ---------------- */
 
@@ -57,7 +55,6 @@ export const CartProvider = ({ children }) => {
     const existingItem = cart.find((i) => i.id === product.id);
 
     if (existingItem) {
-      // Optimistic update
       setCart((prev) =>
         prev.map((item) =>
           item.id === product.id
@@ -93,7 +90,6 @@ export const CartProvider = ({ children }) => {
 
     const previousCart = cart;
 
-    // Optimistic update
     setCart((prev) => prev.filter((item) => item.id !== productId));
 
     try {
@@ -113,7 +109,6 @@ export const CartProvider = ({ children }) => {
 
     const previousCart = cart;
 
-    // Optimistic UI update
     setCart((prev) =>
       prev.map((item) =>
         item.id === productId ? { ...item, quantity } : item

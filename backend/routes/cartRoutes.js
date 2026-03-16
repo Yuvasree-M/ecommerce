@@ -10,11 +10,9 @@ import {
 
 const router = express.Router();
 
-/* PROTECT ALL CART ROUTES */
 
 router.use(verifyToken, attachUser);
 
-/* CART ROUTES */
 
 router.get("/", getCart);
 
