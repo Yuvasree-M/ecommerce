@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 
 import authRoutes from "./routes/authRoutes.js";
 import productRoutes from "./routes/productRoutes.js";
+import categoryRoutes from "./routes/categoryRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 import { verifyToken } from "./middleware/verifyToken.js";
 import { attachUser } from "./middleware/attachUser.js";
@@ -49,7 +50,7 @@ app.get("/api/protected", verifyToken, attachUser, (req, res) => {
     role: req.user.role,
   });
 });
-
+app.use("/api/categories", categoryRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/transactions", transactionRoutes);
 app.use("/api/cart", cartRoutes);
