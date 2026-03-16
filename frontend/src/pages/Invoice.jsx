@@ -7,7 +7,6 @@ import {
   FaDownload,
   FaArrowLeft,
   FaShoppingBag,
-  FaLeaf,
   FaCheckCircle,
   FaTimes,
 } from "react-icons/fa";
@@ -76,7 +75,6 @@ const Invoice = () => {
 
   if (!order) return (
     <div className="flex flex-col items-center justify-center mt-32 gap-3">
-      <FaLeaf className="text-green-500 text-5xl" />
       <p className="text-red-500 font-semibold text-lg">Invoice not found</p>
       <button
         onClick={() => navigate("/products")}

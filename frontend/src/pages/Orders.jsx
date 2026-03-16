@@ -3,7 +3,7 @@ import { apiFetch } from "../services/api";
 import { useNavigate } from "react-router-dom";
 import {
   FaTruck, FaCheckCircle, FaBox, FaMapMarkerAlt,
-  FaPhone, FaReceipt, FaLeaf, FaClock,
+  FaPhone, FaReceipt, FaClock,
 } from "react-icons/fa";
 
 const STATUS = {

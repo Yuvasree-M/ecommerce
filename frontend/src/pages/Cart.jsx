@@ -5,7 +5,7 @@ import { CartContext } from "../context/CartContext";
 import { apiFetch } from "../services/api";
 import {
   FaTrash, FaShoppingCart, FaArrowRight,
-  FaLeaf, FaShieldAlt, FaTruck, FaMinus, FaPlus,
+   FaShieldAlt, FaTruck, FaMinus, FaPlus,
   FaExclamationTriangle,
 } from "react-icons/fa";
 
@@ -78,8 +78,7 @@ const Cart = () => {
       <button
         onClick={() => navigate("/products")}
         className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white font-semibold text-sm px-6 py-3 rounded-xl transition-all hover:-translate-y-0.5 shadow-md shadow-green-100"
-      >
-        <FaLeaf className="text-xs" /> Browse Products
+      > Browse Products
       </button>
     </div>
   );
@@ -324,7 +323,7 @@ const Cart = () => {
                 <div className="space-y-2.5">
                   {[
                     { icon: FaTruck,     bg: "bg-blue-50",   color: "text-blue-500",   text: "Free delivery on all orders"   },
-                    { icon: FaLeaf,      bg: "bg-green-50",  color: "text-green-500",  text: "100% fresh & organic products" },
+                  
                     { icon: FaShieldAlt, bg: "bg-purple-50", color: "text-purple-500", text: "Secure & encrypted checkout"   },
                   ].map(({ icon: Icon, bg, color, text }) => (
                     <div key={text} className="flex items-center gap-3">

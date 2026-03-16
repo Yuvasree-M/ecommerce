@@ -6,7 +6,7 @@ import { updatePassword, reauthenticateWithCredential, EmailAuthProvider } from 
 import { apiFetch } from "../services/api";
 import {
   FaEnvelope, FaShieldAlt, FaShoppingBag,
-  FaArrowLeft, FaLeaf, FaPhone, FaMapMarkerAlt,
+  FaArrowLeft, FaPhone, FaMapMarkerAlt,
   FaLock, FaEdit, FaTimes, FaCheck, FaEye, FaEyeSlash
 } from "react-icons/fa";
 
@@ -226,7 +226,6 @@ const Profile = () => {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#f0f9e8]">
         <div className="text-center">
-          <FaLeaf className="mx-auto text-green-400 mb-4" size={40} />
           <p className="text-gray-600 font-medium">Please login to view your profile</p>
           <button
             onClick={() => navigate("/login")}
@@ -330,7 +329,6 @@ const Profile = () => {
             <div className="absolute top-4 right-16 w-16 h-16 rounded-full bg-white/10" />
             <div className="absolute -bottom-2 left-10 w-10 h-10 rounded-full bg-white/10" />
             <div className="absolute top-4 left-6 opacity-20">
-              <FaLeaf size={60} className="text-white rotate-12" />
             </div>
             <div className="absolute top-4 right-6">
               <span className={`
