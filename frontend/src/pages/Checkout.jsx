@@ -3,12 +3,15 @@ import { AuthContext } from "../context/AuthContext";
 import { CartContext } from "../context/CartContext";
 import { useNavigate } from "react-router-dom";
 import { apiFetch } from "../services/api";
+import { FaMapMarkerAlt, FaPhone, FaShoppingCart } from "react-icons/fa";
 
 const Checkout = () => {
   const { token } = useContext(AuthContext);
-  const { cart, fetchCart } = useContext(CartContext);
+  const { cart } = useContext(CartContext);
   const navigate = useNavigate();
 
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
   const [address, setAddress] = useState("");
   const [phone, setPhone] = useState("");
   const [loading, setLoading] = useState(false);
@@ -24,7 +27,8 @@ const Checkout = () => {
     const fetchProfile = async () => {
       try {
         const data = await apiFetch("/api/users/profile");
-
+        setName(data.name || "");
+        setEmail(data.email || "");
         setAddress(data.address || "");
         setPhone(data.phone || "");
       } catch (err) {
@@ -35,22 +39,7 @@ const Checkout = () => {
     if (token) fetchProfile();
   }, [token]);
 
-  /* ---------------- LOAD RAZORPAY SCRIPT ---------------- */
-
-  const loadRazorpayScript = () =>
-    new Promise((resolve) => {
-      const script = document.createElement("script");
-
-      script.src = "https://checkout.razorpay.com/v1/checkout.js";
-
-      script.onload = () => resolve(true);
-
-      script.onerror = () => resolve(false);
-
-      document.body.appendChild(script);
-    });
-
-  /* ---------------- HANDLE PAYMENT ---------------- */
+  /* ---------------- PAYMENT ---------------- */
 
   const handlePayment = async () => {
     if (!address.trim()) return alert("Enter delivery address");
@@ -67,22 +56,14 @@ const Checkout = () => {
         productId: i.id,
         quantity: i.quantity,
       })),
+      name,
+      email,
       address,
       phone,
     };
 
-    const loaded = await loadRazorpayScript();
-
-    if (!loaded) {
-      alert("Razorpay failed to load");
-      setLoading(false);
-      return;
-    }
-
     try {
-      /* ---------------- CREATE RAZORPAY ORDER ---------------- */
-
-    const data = await apiFetch("/api/payment/razorpay/order", {
+      const data = await apiFetch("/api/payment/razorpay/order", {
         method: "POST",
         body: JSON.stringify({
           amount: totalAmount,
@@ -98,11 +79,9 @@ const Checkout = () => {
         name: "Verdura",
         description: "Order Payment",
 
-        /* ---------------- PAYMENT SUCCESS ---------------- */
-
         handler: async (response) => {
           try {
-           const order = await apiFetch("/api/payment/order/save", {
+            const order = await apiFetch("/api/payment/order/save", {
               method: "POST",
               body: JSON.stringify({
                 ...orderData,
@@ -111,15 +90,17 @@ const Checkout = () => {
               }),
             });
 
-            await fetchCart();
-
-            navigate(`/invoice/${order.orderId}`);
+            navigate(`/invoice/${order.orderId}`, {
+              state: { order },
+            });
           } catch (err) {
             console.error("Order placement failed", err);
           }
         },
 
         prefill: {
+          name,
+          email,
           contact: phone,
         },
 
@@ -131,7 +112,6 @@ const Checkout = () => {
       new window.Razorpay(options).open();
     } catch (err) {
       console.error(err);
-
       alert("Payment failed");
     }
 
@@ -141,47 +121,160 @@ const Checkout = () => {
   /* ---------------- UI ---------------- */
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8 pt-24">
-      <h2 className="text-3xl font-bold mb-6">
+    <div className="max-w-6xl mx-auto px-4 pt-24 pb-16">
+
+      <h2 className="text-3xl font-bold mb-8">
         Checkout - <span className="text-green-600">Verdura</span>
       </h2>
 
-      {cart.map((item) => (
-        <div key={item.id} className="flex gap-4 mb-4">
-          <img src={item.image} className="w-20 h-20 object-cover" />
+      <div className="grid md:grid-cols-2 gap-10">
 
-          <div>
-            <p>{item.name}</p>
-            <p>
-              ₹ {item.price} × {item.quantity}
-            </p>
+        {/* LEFT SIDE */}
+
+        <div>
+
+          {/* CUSTOMER INFO */}
+
+          <div className="bg-white shadow-md rounded-xl p-6 mb-6">
+
+            <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
+              <FaMapMarkerAlt className="text-green-600"/>
+              Delivery Details
+            </h3>
+
+            <div className="space-y-3">
+
+              <input
+                value={name}
+                readOnly
+                className="w-full border rounded-lg p-3 bg-gray-100"
+              />
+
+              <input
+                value={email}
+                readOnly
+                className="w-full border rounded-lg p-3 bg-gray-100"
+              />
+
+              <textarea
+                value={address}
+                onChange={(e) => setAddress(e.target.value)}
+                placeholder="Enter Delivery Address"
+                className="w-full border rounded-lg p-3 focus:ring-2 focus:ring-green-500 outline-none"
+              />
+
+              <div className="relative">
+                <FaPhone className="absolute top-4 left-3 text-gray-400"/>
+                <input
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  placeholder="Phone Number"
+                  className="w-full border rounded-lg pl-10 p-3 focus:ring-2 focus:ring-green-500 outline-none"
+                />
+              </div>
+
+            </div>
           </div>
+
+          {/* CART ITEMS */}
+
+          <div className="bg-white shadow-md rounded-xl p-6">
+
+            <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
+              <FaShoppingCart className="text-green-600"/>
+              Order Items
+            </h3>
+
+            <div className="space-y-4">
+
+              {cart.map((item) => (
+
+                <div
+                  key={item.id}
+                  className="flex items-center justify-between border-b pb-4"
+                >
+
+                  <div className="flex items-center gap-4">
+
+                    <img
+                      src={item.image}
+                      alt={item.name}
+                      className="w-16 h-16 rounded-lg object-cover"
+                    />
+
+                    <div>
+                      <p className="font-semibold">{item.name}</p>
+                      <p className="text-gray-500 text-sm">
+                        ₹ {item.price} × {item.quantity}
+                      </p>
+                    </div>
+
+                  </div>
+
+                  <p className="font-semibold">
+                    ₹ {item.price * item.quantity}
+                  </p>
+
+                </div>
+
+              ))}
+
+            </div>
+
+          </div>
+
         </div>
-      ))}
 
-      <h3 className="font-bold mb-4">Total : ₹ {totalAmount}</h3>
+        {/* RIGHT SIDE */}
 
-      <input
-        value={address}
-        onChange={(e) => setAddress(e.target.value)}
-        placeholder="Delivery Address"
-        className="w-full border p-2 mb-3"
-      />
+        <div>
 
-      <input
-        value={phone}
-        onChange={(e) => setPhone(e.target.value)}
-        placeholder="Phone Number"
-        className="w-full border p-2 mb-3"
-      />
+          <div className="bg-white shadow-lg rounded-xl p-6 sticky top-28">
 
-      <button
-        onClick={handlePayment}
-        disabled={loading}
-        className="bg-green-600 text-white px-6 py-3 rounded w-full"
-      >
-        {loading ? "Processing Payment..." : "Confirm Order"}
-      </button>
+            <h3 className="text-xl font-semibold mb-6">
+              Order Summary
+            </h3>
+
+            <div className="space-y-3 text-gray-700">
+
+              <div className="flex justify-between">
+                <span>Items</span>
+                <span>{cart.length}</span>
+              </div>
+
+              <div className="flex justify-between">
+                <span>Subtotal</span>
+                <span>₹ {totalAmount}</span>
+              </div>
+
+              <div className="flex justify-between">
+                <span>Delivery</span>
+                <span className="text-green-600">FREE</span>
+              </div>
+
+              <hr/>
+
+              <div className="flex justify-between font-bold text-lg">
+                <span>Total</span>
+                <span>₹ {totalAmount}</span>
+              </div>
+
+            </div>
+
+            <button
+              onClick={handlePayment}
+              disabled={loading}
+              className="w-full mt-6 bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-semibold transition"
+            >
+              {loading ? "Processing Payment..." : `Pay ₹${totalAmount}`}
+            </button>
+
+          </div>
+
+        </div>
+
+      </div>
+
     </div>
   );
 };

@@ -1,4 +1,4 @@
-import { useContext } from "react";
+import { useContext, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import { CartContext } from "../context/CartContext";
@@ -6,20 +6,26 @@ import { apiFetch } from "../services/api";
 
 const Cart = () => {
   const { token } = useContext(AuthContext);
-  const { cart, fetchCart } = useContext(CartContext);
+  const { cart, setCart, fetchCart } = useContext(CartContext);
   const navigate = useNavigate();
 
   /* ---------------- REMOVE ITEM ---------------- */
 
   const handleRemove = async (id) => {
+    // Optimistic UI update
+    const previousCart = cart;
+
+    setCart((prev) => prev.filter((item) => item.id !== id));
+
     try {
       await apiFetch(`/api/cart/${id}`, {
         method: "DELETE",
       });
-
-      fetchCart();
     } catch (error) {
       console.error("Remove cart item failed", error);
+
+      // rollback if API fails
+      setCart(previousCart);
     }
   };
 
@@ -27,6 +33,15 @@ const Cart = () => {
 
   const updateQuantity = async (id, quantity) => {
     if (quantity < 1) return;
+
+    const previousCart = cart;
+
+    // Optimistic UI update
+    setCart((prev) =>
+      prev.map((item) =>
+        item.id === id ? { ...item, quantity: quantity } : item
+      )
+    );
 
     try {
       await apiFetch("/api/cart", {
@@ -36,10 +51,11 @@ const Cart = () => {
           quantity,
         }),
       });
-
-      fetchCart();
     } catch (error) {
       console.error("Update quantity failed", error);
+
+      // rollback
+      setCart(previousCart);
     }
   };
 
@@ -56,10 +72,9 @@ const Cart = () => {
 
   /* ---------------- TOTAL PRICE ---------------- */
 
-  const totalPrice = cart.reduce(
-    (sum, item) => sum + item.price * item.quantity,
-    0
-  );
+  const totalPrice = useMemo(() => {
+    return cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  }, [cart]);
 
   return (
     <div className="min-h-screen bg-[#f0f9e8] dark:bg-gray-900 p-6 transition-colors container mx-auto pt-24">

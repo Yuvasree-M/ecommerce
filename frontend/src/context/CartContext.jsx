@@ -1,4 +1,4 @@
-import { createContext, useState, useEffect, useContext } from "react";
+import { createContext, useState, useEffect, useContext, useMemo } from "react";
 import { AuthContext } from "./AuthContext";
 import { apiFetch } from "../services/api.js";
 
@@ -34,35 +34,55 @@ export const CartProvider = ({ children }) => {
 
   /* ---------------- CART COUNT ---------------- */
 
-  const cartCount = cart.reduce(
-    (total, item) => total + (item.quantity || 1),
-    0
-  );
+  const cartCount = useMemo(() => {
+    return cart.reduce((total, item) => total + (item.quantity || 1), 0);
+  }, [cart]);
 
   /* ---------------- TOTAL PRICE ---------------- */
 
-  const totalPrice = cart.reduce(
-    (acc, item) => acc + (item.price || 0) * (item.quantity || 1),
-    0
-  );
+  const totalPrice = useMemo(() => {
+    return cart.reduce(
+      (acc, item) => acc + (item.price || 0) * (item.quantity || 1),
+      0
+    );
+  }, [cart]);
 
   /* ---------------- ADD TO CART ---------------- */
 
   const addToCart = async (product, quantity = 1) => {
     if (!token) return;
 
+    const previousCart = cart;
+
+    const existingItem = cart.find((i) => i.id === product.id);
+
+    if (existingItem) {
+      // Optimistic update
+      setCart((prev) =>
+        prev.map((item) =>
+          item.id === product.id
+            ? { ...item, quantity: item.quantity + quantity }
+            : item
+        )
+      );
+    } else {
+      setCart((prev) => [
+        ...prev,
+        { ...product, quantity }
+      ]);
+    }
+
     try {
       await apiFetch("/api/cart", {
         method: "POST",
         body: JSON.stringify({
-          productId: product.id,   // fixed from _id
+          productId: product.id,
           quantity,
         }),
       });
-
-      await fetchCart();
     } catch (err) {
       console.error("Add to cart failed:", err);
+      setCart(previousCart);
     }
   };
 
@@ -71,14 +91,46 @@ export const CartProvider = ({ children }) => {
   const removeFromCart = async (productId) => {
     if (!token) return;
 
+    const previousCart = cart;
+
+    // Optimistic update
+    setCart((prev) => prev.filter((item) => item.id !== productId));
+
     try {
       await apiFetch(`/api/cart/${productId}`, {
         method: "DELETE",
       });
-
-      await fetchCart();
     } catch (err) {
       console.error("Remove from cart failed:", err);
+      setCart(previousCart);
+    }
+  };
+
+  /* ---------------- UPDATE QUANTITY ---------------- */
+
+  const updateQuantity = async (productId, quantity) => {
+    if (!token || quantity < 1) return;
+
+    const previousCart = cart;
+
+    // Optimistic UI update
+    setCart((prev) =>
+      prev.map((item) =>
+        item.id === productId ? { ...item, quantity } : item
+      )
+    );
+
+    try {
+      await apiFetch("/api/cart", {
+        method: "POST",
+        body: JSON.stringify({
+          productId,
+          quantity,
+        }),
+      });
+    } catch (err) {
+      console.error("Update quantity failed:", err);
+      setCart(previousCart);
     }
   };
 
@@ -87,14 +139,17 @@ export const CartProvider = ({ children }) => {
   const clearCart = async () => {
     if (!token) return;
 
+    const previousCart = cart;
+
+    setCart([]);
+
     try {
       await apiFetch("/api/cart/clear", {
         method: "POST",
       });
-
-      setCart([]);
     } catch (err) {
       console.error("Clear cart failed:", err);
+      setCart(previousCart);
     }
   };
 
@@ -109,6 +164,7 @@ export const CartProvider = ({ children }) => {
         setCart,
         addToCart,
         removeFromCart,
+        updateQuantity,
         clearCart,
       }}
     >
