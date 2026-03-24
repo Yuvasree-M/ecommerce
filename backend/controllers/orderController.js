@@ -52,6 +52,8 @@ export const placeOrder = async (req, res) => {
       paymentId,
       razorpayOrderId,
       status: "ORDER_PLACED",
+       discount: discount || 0,      // ✅ add this
+  promoCode: promoCode || "",   // ✅ add this
       deletedByUser: false,
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -77,6 +79,8 @@ export const placeOrder = async (req, res) => {
       address,
       phone,
       status: "ORDER_PLACED",
+       discount: discount || 0,      // ✅ add this
+  promoCode: promoCode || "",   // ✅ add this
     };
 
     const invoicePath = path.join(os.tmpdir(), `invoice-${orderRef.id}.pdf`);

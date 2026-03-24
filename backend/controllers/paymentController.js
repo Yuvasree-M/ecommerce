@@ -42,7 +42,8 @@ export const createRazorpayOrder = async (req, res) => {
 // Save order after payment
 export const saveOrder = async (req, res) => {
   try {
-    const { cartItems, address, phone, paymentId, razorpayOrderId, name, email } = req.body;
+    const { cartItems, address, phone, paymentId, razorpayOrderId, name, email,  discount,
+  promoCode } = req.body;
 
     const userId = req.user.uid;
     let userName  = name  || req.user.name  || "";
@@ -86,6 +87,8 @@ export const saveOrder = async (req, res) => {
       email: userEmail,     
       items: itemsWithDetails,
       totalAmount,
+        discount: discount || 0,
+  promoCode: promoCode || "",
       address,
       phone,
       paymentId,

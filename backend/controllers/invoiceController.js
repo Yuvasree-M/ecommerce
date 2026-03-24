@@ -1,3 +1,48 @@
+// import path from "path";
+// import fs from "fs";
+// import { db } from "../config/firebase.js";
+// import { generateInvoice } from "../utils/generateInvoice.js";
+
+// // Download invoice PDF
+// export const downloadInvoice = async (req, res) => {
+//   try {
+//     const orderId = req.params.id;
+//     const orderDoc = await db.collection("orders").doc(orderId).get();
+
+//     if (!orderDoc.exists)
+//       return res.status(404).json({ message: "Order not found" });
+
+//     const data = orderDoc.data(); 
+
+//     if (data.userId !== req.user.uid)
+//       return res.status(403).json({ message: "Unauthorized" });
+
+
+//     const order = {
+//       name: data.name,
+//       email: data.email,
+//       phone: data.phone,
+//       address: data.address,
+//       totalAmount: data.totalAmount,
+//       items: data.items || [],
+//     };
+
+//     const tempDir = "temp";
+//     if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir);
+
+//     const filePath = path.join(tempDir, `invoice-${orderId}.pdf`);
+//     await generateInvoice(order, orderId, filePath);
+
+//     res.download(filePath, `invoice-${orderId}.pdf`, () => {
+//       if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+//     });
+
+//   } catch (err) {
+//     console.error("Invoice download error:", err);
+//     res.status(500).json({ message: "Invoice generation failed" });
+//   }
+// };
+
 import path from "path";
 import fs from "fs";
 import { db } from "../config/firebase.js";
@@ -7,38 +52,77 @@ import { generateInvoice } from "../utils/generateInvoice.js";
 export const downloadInvoice = async (req, res) => {
   try {
     const orderId = req.params.id;
-    const orderDoc = await db.collection("orders").doc(orderId).get();
 
-    if (!orderDoc.exists)
-      return res.status(404).json({ message: "Order not found" });
+    const orderDoc = await db
+      .collection("orders")
+      .doc(orderId)
+      .get();
 
-    const data = orderDoc.data(); 
+    if (!orderDoc.exists) {
+      return res.status(404).json({
+        message: "Order not found"
+      });
+    }
 
-    if (data.userId !== req.user.uid)
-      return res.status(403).json({ message: "Unauthorized" });
+    const data = orderDoc.data();
 
+    // check ownership
+    if (data.userId !== req.user.uid) {
+      return res.status(403).json({
+        message: "Unauthorized"
+      });
+    }
 
+    /* ---------- IMPORTANT ---------- */
     const order = {
       name: data.name,
       email: data.email,
       phone: data.phone,
       address: data.address,
-      totalAmount: data.totalAmount,
+
       items: data.items || [],
+
+      totalAmount: data.totalAmount || 0,
+
+      discount: data.discount || 0,        // ✅ added
+      promoCode: data.promoCode || ""      // ✅ added
     };
 
+    /* create temp folder */
     const tempDir = "temp";
-    if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir);
+    if (!fs.existsSync(tempDir)) {
+      fs.mkdirSync(tempDir);
+    }
 
-    const filePath = path.join(tempDir, `invoice-${orderId}.pdf`);
-    await generateInvoice(order, orderId, filePath);
+    const filePath = path.join(
+      tempDir,
+      `invoice-${orderId}.pdf`
+    );
 
-    res.download(filePath, `invoice-${orderId}.pdf`, () => {
-      if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
-    });
+    await generateInvoice(
+      order,
+      orderId,
+      filePath
+    );
+
+    res.download(
+      filePath,
+      `invoice-${orderId}.pdf`,
+      () => {
+        if (fs.existsSync(filePath)) {
+          fs.unlinkSync(filePath);
+        }
+      }
+    );
 
   } catch (err) {
-    console.error("Invoice download error:", err);
-    res.status(500).json({ message: "Invoice generation failed" });
+    console.error(
+      "Invoice download error:",
+      err
+    );
+
+    res.status(500).json({
+      message: "Invoice generation failed"
+    });
   }
 };

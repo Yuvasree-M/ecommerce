@@ -18,7 +18,7 @@ import {
 
 const Checkout = () => {
   const { token } = useContext(AuthContext);
-  const { cart, clearCart, discount } = useContext(CartContext);
+  const { cart, clearCart, discount, promoCode } = useContext(CartContext);
   const navigate = useNavigate();
 
   const [name, setName] = useState("");
@@ -112,6 +112,8 @@ const Checkout = () => {
               phone,
               address,
               totalAmount,
+                discount,        // ✅ ADD THIS
+  promoCode, 
               status: "ORDER_PLACED",
               items: cart.map((i) => ({
                 productId: i.id,
