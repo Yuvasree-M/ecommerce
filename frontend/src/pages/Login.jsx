@@ -31,8 +31,8 @@ const Login = () => {
 
     try {
       await signInWithEmailAndPassword(auth, email.trim(), password.trim());
-      setIsLoggedIn(true);   // ← mark intentional login in context (controls Navbar)
-      setJustLoggedIn(true); // ← trigger redirect in useEffect below
+      setIsLoggedIn(true);  
+      setJustLoggedIn(true); 
     } catch (error) {
       console.error(error.code);
       if (error.code === "auth/wrong-password" || error.code === "auth/invalid-credential")
@@ -46,7 +46,6 @@ const Login = () => {
     }
   };
 
-  // Only redirect after intentional login click
   useEffect(() => {
     if (!user || !justLoggedIn) return;
     if (role === "ADMIN") navigate("/admin/dashboard", { replace: true });
@@ -62,7 +61,6 @@ const Login = () => {
           <div className="bg-red-100 text-red-600 px-4 py-2 rounded text-sm">{errors.general}</div>
         )}
 
-        {/* Email */}
         <div className="flex items-center border border-gray-300 rounded-lg px-3 py-2">
           <FaEnvelope className="text-green-600 mr-2" />
           <input
@@ -75,7 +73,6 @@ const Login = () => {
         </div>
         {errors.email && <p className="text-red-600 text-sm">{errors.email}</p>}
 
-        {/* Password */}
         <div className="flex items-center border border-gray-300 rounded-lg px-3 py-2">
           <FaLock className="text-green-600 mr-2" />
           <input

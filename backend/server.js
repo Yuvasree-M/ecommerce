@@ -31,7 +31,6 @@ app.use(express.json());
 
 app.use(logger);
 
-// Root route
 app.get("/", (req, res) => {
   res.json({
     message: "Ecommerce Backend API Running",
@@ -59,7 +58,6 @@ app.use("/api/orders", orderRoutes);
 app.use("/api/contact", contactRoutes);
 app.use("/api/invoice", invoiceRoutes);
 
-// error handler must be last
 app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;

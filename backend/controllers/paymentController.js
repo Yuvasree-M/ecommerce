@@ -6,7 +6,6 @@ import { sendInvoiceMail } from "../utils/sendInvoiceMail.js";
 import path from "path";
 import os from "os";
 
-// Initialize Razorpay
 const razorpay = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID,
   key_secret: process.env.RAZORPAY_SECRET,
@@ -61,7 +60,6 @@ export const saveOrder = async (req, res) => {
     if (!cartItems || cartItems.length === 0)
       return res.status(400).json({ message: "Cart is empty" });
 
-    /* FETCH PRODUCT DETAILS */
     const itemsWithDetails = await Promise.all(
       cartItems.map(async (item) => {
         const doc = await db.collection("products").doc(item.productId).get();
@@ -99,7 +97,6 @@ export const saveOrder = async (req, res) => {
       updatedAt: new Date(),
     });
 
-    /* SAVE TRANSACTION */
     await db.collection("transactions").add({
       userId,
       orderId: orderRef.id,
@@ -109,7 +106,6 @@ export const saveOrder = async (req, res) => {
       createdAt: new Date(),
     });
 
-    /* CLEAR CART */
     await db.collection("carts").doc(userId).set({ items: [] });
 
     const savedOrder = {

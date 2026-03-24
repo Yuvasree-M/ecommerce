@@ -10,9 +10,6 @@ import {
   FaLock, FaEdit, FaTimes, FaCheck, FaEye, FaEyeSlash
 } from "react-icons/fa";
 
-/* ------------------------------------------------
-   EDIT MODAL
------------------------------------------------- */
 const EditModal = ({ field, currentValue, onClose, onSave }) => {
   const [value, setValue] = useState(currentValue || "");
   const [currentPassword, setCurrentPassword] = useState("");
@@ -61,7 +58,6 @@ const EditModal = ({ field, currentValue, onClose, onSave }) => {
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center px-4">
       <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md p-6">
 
-        {/* Header */}
         <div className="flex justify-between items-center mb-6">
           <h3 className="text-lg font-black text-gray-900">
             Update {labels[field]}
@@ -74,11 +70,9 @@ const EditModal = ({ field, currentValue, onClose, onSave }) => {
           </button>
         </div>
 
-        {/* Fields */}
         <div className="space-y-4">
           {isPassword ? (
             <>
-              {/* Current Password */}
               <div>
                 <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1 block">
                   Current Password
@@ -101,7 +95,6 @@ const EditModal = ({ field, currentValue, onClose, onSave }) => {
                 </div>
               </div>
 
-              {/* New Password */}
               <div>
                 <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1 block">
                   New Password
@@ -123,8 +116,6 @@ const EditModal = ({ field, currentValue, onClose, onSave }) => {
                   </span>
                 </div>
               </div>
-
-              {/* Confirm Password */}
               <div>
                 <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1 block">
                   Confirm New Password
@@ -179,14 +170,12 @@ const EditModal = ({ field, currentValue, onClose, onSave }) => {
           )}
         </div>
 
-        {/* Error */}
         {error && (
           <p className="text-red-500 text-xs mt-3 bg-red-50 px-3 py-2 rounded-lg">
             {error}
           </p>
         )}
 
-        {/* Buttons */}
         <div className="flex gap-3 mt-6">
           <button
             onClick={onClose}
@@ -212,14 +201,11 @@ const EditModal = ({ field, currentValue, onClose, onSave }) => {
   );
 };
 
-/* ------------------------------------------------
-   PROFILE PAGE
------------------------------------------------- */
 const Profile = () => {
   const { user, setUser, role } = useContext(AuthContext);
   const navigate = useNavigate();
 
-  const [editField, setEditField] = useState(null); // "phone" | "address" | "password"
+  const [editField, setEditField] = useState(null); 
   const [successMsg, setSuccessMsg] = useState("");
 
   if (!user) {

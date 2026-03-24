@@ -3,6 +3,7 @@ import fs from "fs";
 import { db } from "../config/firebase.js";
 import { generateInvoice } from "../utils/generateInvoice.js";
 
+// Download invoice PDF
 export const downloadInvoice = async (req, res) => {
   try {
     const orderId = req.params.id;

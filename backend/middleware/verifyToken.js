@@ -1,5 +1,6 @@
 import { auth } from "../config/firebase.js";
 
+// Middleware to verify Firebase ID token and attach user info to request
 export const verifyToken = async (req, res, next) => {
   try {
     const authHeader = req.headers.authorization;

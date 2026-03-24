@@ -5,10 +5,17 @@ import { AuthContext } from "../context/AuthContext";
 import { CartContext } from "../context/CartContext";
 import { signOut } from "firebase/auth";
 import { auth } from "../firebase";
-import { FaUserCircle, FaArrowUp, FaBars, FaTimes, FaLeaf } from "react-icons/fa";
+import {
+  FaUserCircle,
+  FaArrowUp,
+  FaBars,
+  FaTimes,
+  FaLeaf,
+} from "react-icons/fa";
 
 const Navbar = () => {
-  const { user, role, loading, isLoggedIn, setIsLoggedIn } = useContext(AuthContext);
+  const { user, role, loading, isLoggedIn, setIsLoggedIn } =
+    useContext(AuthContext);
   const { cartCount, setCart } = useContext(CartContext);
 
   const navigate = useNavigate();
@@ -24,7 +31,6 @@ const Navbar = () => {
   const mobileProfileRef = useRef(null);
   const mobileMenuRef = useRef(null);
 
-  /* LOGOUT */
   const handleLogout = async () => {
     try {
       await signOut(auth);
@@ -37,7 +43,6 @@ const Navbar = () => {
     }
   };
 
-  /* CLOSE MENUS */
   const closeAllMenus = () => {
     setProfileOpen(false);
     setMobileOpen(false);
@@ -45,7 +50,6 @@ const Navbar = () => {
     setShowLogoutModal(false);
   };
 
-  /* SCROLL SECTION HIGHLIGHT */
   useEffect(() => {
     const sections = ["home", "about", "products", "faq", "contact"];
 
@@ -54,7 +58,11 @@ const Navbar = () => {
       setShowScrollUp(window.scrollY > 300);
       for (let id of sections) {
         const el = document.getElementById(id);
-        if (el && scrollPos >= el.offsetTop && scrollPos < el.offsetTop + el.offsetHeight) {
+        if (
+          el &&
+          scrollPos >= el.offsetTop &&
+          scrollPos < el.offsetTop + el.offsetHeight
+        ) {
           setActiveSection(id);
           break;
         }
@@ -65,12 +73,14 @@ const Navbar = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  /* CLOSE ON OUTSIDE CLICK */
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (profileRef.current && !profileRef.current.contains(e.target))
         setProfileOpen(false);
-      if (mobileProfileRef.current && !mobileProfileRef.current.contains(e.target))
+      if (
+        mobileProfileRef.current &&
+        !mobileProfileRef.current.contains(e.target)
+      )
         setMobileProfileOpen(false);
       if (mobileMenuRef.current && !mobileMenuRef.current.contains(e.target))
         setMobileOpen(false);
@@ -79,7 +89,6 @@ const Navbar = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  /* LINK STYLES */
   const linkClasses = (id) =>
     `transition px-3 py-1 rounded ${
       activeSection === id
@@ -93,8 +102,6 @@ const Navbar = () => {
         ? "text-green-400 font-bold border-b-2 border-green-400"
         : "text-gray-200 hover:text-green-400"
     }`;
-
-  /* BRAND CLICK */
   const handleBrandClick = (e) => {
     e.preventDefault();
     if (!isLoggedIn) {
@@ -109,11 +116,8 @@ const Navbar = () => {
       navigate("/admin/dashboard");
     }
   };
-
-  /* WAIT FOR AUTH */
   if (loading) return null;
 
-  /* PROFILE DROPDOWN CONTENT */
   const ProfileLinks = () => (
     <>
       {!isLoggedIn ? (
@@ -172,53 +176,71 @@ const Navbar = () => {
     <>
       <nav className="w-full fixed top-0 z-50 bg-gray-900/95 backdrop-blur-md shadow-md">
         <div className="max-w-7xl mx-auto flex justify-between p-4 items-center">
-
-          {/* BRAND */}
-  <a
-  href="/#home"
-  onClick={handleBrandClick}
-  className="flex items-center gap-2 text-2xl font-bold text-green-500 cursor-pointer"
->
-  <img src="/verdura.png" alt="Verdura Logo" className="w-6 h-6" />
-  Verdura
-</a>
+          <a
+            href="/#home"
+            onClick={handleBrandClick}
+            className="flex items-center gap-2 text-2xl font-bold text-green-500 cursor-pointer"
+          >
+            <img src="/verdura.png" alt="Verdura Logo" className="w-6 h-6" />
+            Verdura
+          </a>
 
           {/* DESKTOP MENU */}
           <div className="hidden md:flex gap-6 items-center">
-
-            {/* Landing links - show only when NOT logged in */}
             {!isLoggedIn && (
               <>
-                <Lin smooth to="/#home" className={linkClasses("home")}>Home</Lin>
-                <Lin smooth to="/#about" className={linkClasses("about")}>About</Lin>
-                <Lin smooth to="/#products" className={linkClasses("products")}>Products</Lin>
-                <Lin smooth to="/#faq" className={linkClasses("faq")}>FAQ</Lin>
-                <Lin smooth to="/#contact" className={linkClasses("contact")}>Contact</Lin>
+                <Lin smooth to="/#home" className={linkClasses("home")}>
+                  Home
+                </Lin>
+                <Lin smooth to="/#about" className={linkClasses("about")}>
+                  About
+                </Lin>
+                <Lin smooth to="/#products" className={linkClasses("products")}>
+                  Products
+                </Lin>
+                <Lin smooth to="/#faq" className={linkClasses("faq")}>
+                  FAQ
+                </Lin>
+                <Lin smooth to="/#contact" className={linkClasses("contact")}>
+                  Contact
+                </Lin>
               </>
             )}
-
-            {/* User links */}
             {isLoggedIn && role === "USER" && (
               <>
-                <NavLink to="/products" className={navLinkClasses}>Products</NavLink>
-                <NavLink to="/cart" className={navLinkClasses}>Cart ({cartCount})</NavLink>
-                <NavLink to="/orders" className={navLinkClasses}>Orders</NavLink>
+                <NavLink to="/products" className={navLinkClasses}>
+                  Products
+                </NavLink>
+                <NavLink to="/cart" className={navLinkClasses}>
+                  Cart ({cartCount})
+                </NavLink>
+                <NavLink to="/orders" className={navLinkClasses}>
+                  Orders
+                </NavLink>
               </>
             )}
-
-            {/* Admin links */}
             {isLoggedIn && role === "ADMIN" && (
               <>
-                <NavLink to="/admin/dashboard" className={navLinkClasses}>Dashboard</NavLink>
-                <NavLink to="/admin/manage-products" className={navLinkClasses}>Manage Products</NavLink>
-                <NavLink to="/products" className={navLinkClasses}>Products</NavLink>
-                <NavLink to="/orders" className={navLinkClasses}>Orders</NavLink>
-                <NavLink to="/admin/all-orders" className={navLinkClasses}>All Orders</NavLink>
-                <NavLink to="/cart" className={navLinkClasses}>Cart ({cartCount})</NavLink>
+                <NavLink to="/admin/dashboard" className={navLinkClasses}>
+                  Dashboard
+                </NavLink>
+                <NavLink to="/admin/manage-products" className={navLinkClasses}>
+                  Manage Products
+                </NavLink>
+                <NavLink to="/products" className={navLinkClasses}>
+                  Products
+                </NavLink>
+                <NavLink to="/orders" className={navLinkClasses}>
+                  Orders
+                </NavLink>
+                <NavLink to="/admin/all-orders" className={navLinkClasses}>
+                  All Orders
+                </NavLink>
+                <NavLink to="/cart" className={navLinkClasses}>
+                  Cart ({cartCount})
+                </NavLink>
               </>
             )}
-
-            {/* Desktop profile icon + dropdown */}
             <div className="relative" ref={profileRef}>
               <FaUserCircle
                 size={26}
@@ -235,8 +257,6 @@ const Navbar = () => {
 
           {/* MOBILE ICONS */}
           <div className="md:hidden flex items-center gap-4">
-
-            {/* Mobile profile icon + dropdown */}
             <div className="relative" ref={mobileProfileRef}>
               <FaUserCircle
                 size={26}
@@ -250,17 +270,17 @@ const Navbar = () => {
               )}
             </div>
 
-            {/* Hamburger button */}
             <button
               onClick={() => {
                 setMobileOpen(!mobileOpen);
                 setMobileProfileOpen(false);
               }}
             >
-              {mobileOpen
-                ? <FaTimes size={24} className="text-green-400" />
-                : <FaBars size={24} className="text-green-400" />
-              }
+              {mobileOpen ? (
+                <FaTimes size={24} className="text-green-400" />
+              ) : (
+                <FaBars size={24} className="text-green-400" />
+              )}
             </button>
           </div>
         </div>
@@ -269,41 +289,100 @@ const Navbar = () => {
         {mobileOpen && (
           <div
             ref={mobileMenuRef}
-            className="md:hidden bg-gray-900/95 backdrop-blur-md shadow-lg w-full px-4 py-4 space-y-4 text-center"
+            className="md:hidden bg-gray-900/95 backdrop-blur-md shadow-lg w-full px-6 py-6 flex flex-col items-start space-y-4 text-left"
           >
             {!isLoggedIn && (
               <>
-                <Lin smooth to="/#home" onClick={closeAllMenus} className={linkClasses("home")}>Home</Lin>
-                <Lin smooth to="/#about" onClick={closeAllMenus} className={linkClasses("about")}>About</Lin>
-                <Lin smooth to="/#products" onClick={closeAllMenus} className={linkClasses("products")}>Products</Lin>
-                <Lin smooth to="/#faq" onClick={closeAllMenus} className={linkClasses("faq")}>FAQ</Lin>
-                <Lin smooth to="/#contact" onClick={closeAllMenus} className={linkClasses("contact")}>Contact</Lin>
+                {["home", "about", "products", "faq", "contact"].map((s) => (
+                  <Lin
+                    key={s}
+                    smooth
+                    to={`/#${s}`}
+                    onClick={closeAllMenus}
+                    className={linkClasses(s)}
+                  >
+                    {s.charAt(0).toUpperCase() + s.slice(1)}
+                  </Lin>
+                ))}
               </>
             )}
 
             {isLoggedIn && role === "USER" && (
               <>
-                <NavLink to="/products" onClick={closeAllMenus} className={navLinkClasses}>Products</NavLink>
-                <NavLink to="/cart" onClick={closeAllMenus} className={navLinkClasses}>Cart ({cartCount})</NavLink>
-                <NavLink to="/orders" onClick={closeAllMenus} className={navLinkClasses}>Orders</NavLink>
+                <NavLink
+                  to="/products"
+                  onClick={closeAllMenus}
+                  className={navLinkClasses}
+                >
+                  Products
+                </NavLink>
+                <NavLink
+                  to="/cart"
+                  onClick={closeAllMenus}
+                  className={navLinkClasses}
+                >
+                  Cart ({cartCount})
+                </NavLink>
+                <NavLink
+                  to="/orders"
+                  onClick={closeAllMenus}
+                  className={navLinkClasses}
+                >
+                  Orders
+                </NavLink>
               </>
             )}
 
             {isLoggedIn && role === "ADMIN" && (
               <>
-                <NavLink to="/admin/dashboard" onClick={closeAllMenus} className={navLinkClasses}>Dashboard</NavLink>
-                <NavLink to="/admin/manage-products" onClick={closeAllMenus} className={navLinkClasses}>Manage Products</NavLink>
-                <NavLink to="/products" onClick={closeAllMenus} className={navLinkClasses}>Products</NavLink>
-                <NavLink to="/orders" onClick={closeAllMenus} className={navLinkClasses}>Orders</NavLink>
-                <NavLink to="/admin/all-orders" onClick={closeAllMenus} className={navLinkClasses}>All Orders</NavLink>
-                <NavLink to="/cart" onClick={closeAllMenus} className={navLinkClasses}>Cart ({cartCount})</NavLink>
+                <NavLink
+                  to="/admin/dashboard"
+                  onClick={closeAllMenus}
+                  className={navLinkClasses}
+                >
+                  Dashboard
+                </NavLink>
+                <NavLink
+                  to="/admin/manage-products"
+                  onClick={closeAllMenus}
+                  className={navLinkClasses}
+                >
+                  Manage Products
+                </NavLink>
+                <NavLink
+                  to="/products"
+                  onClick={closeAllMenus}
+                  className={navLinkClasses}
+                >
+                  Products
+                </NavLink>
+                <NavLink
+                  to="/orders"
+                  onClick={closeAllMenus}
+                  className={navLinkClasses}
+                >
+                  Orders
+                </NavLink>
+                <NavLink
+                  to="/admin/all-orders"
+                  onClick={closeAllMenus}
+                  className={navLinkClasses}
+                >
+                  All Orders
+                </NavLink>
+                <NavLink
+                  to="/cart"
+                  onClick={closeAllMenus}
+                  className={navLinkClasses}
+                >
+                  Cart ({cartCount})
+                </NavLink>
               </>
             )}
           </div>
         )}
       </nav>
 
-      {/* SCROLL UP BUTTON */}
       {showScrollUp && (
         <button
           onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
@@ -313,11 +392,12 @@ const Navbar = () => {
         </button>
       )}
 
-      {/* LOGOUT MODAL */}
       {showLogoutModal && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
           <div className="bg-gray-900 rounded-lg p-6 w-80 text-center">
-            <p className="text-gray-200 mb-4">Are you sure you want to logout?</p>
+            <p className="text-gray-200 mb-4">
+              Are you sure you want to logout?
+            </p>
             <div className="flex justify-around">
               <button
                 onClick={handleLogout}

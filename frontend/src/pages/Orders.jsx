@@ -96,7 +96,6 @@ const Orders = () => {
     </div>
   );
 
-  /* ── EMPTY ── */
   if (orders.length === 0) return (
     <div className="min-h-screen bg-green-50 flex flex-col items-center justify-center gap-4 pt-20">
       <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center shadow-md border-2 border-green-100">

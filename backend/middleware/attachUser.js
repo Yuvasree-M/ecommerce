@@ -1,5 +1,6 @@
-import { db } from "../config/firebase.js"; // ← THIS WAS MISSING
+import { db } from "../config/firebase.js"; 
 
+// Middleware to attach user data to request
 export const attachUser = async (req, res, next) => {
   try {
     if (!req.user) return res.status(401).json({ message: "User not found" });

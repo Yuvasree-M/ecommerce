@@ -8,6 +8,8 @@ const defaultClient = SibApiV3Sdk.ApiClient.instance;
 defaultClient.authentications["api-key"].apiKey = process.env.BREVO_API_KEY;
 const apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
 
+// Sends an order confirmation email with the invoice attached
+
 export const sendInvoiceMail = async (email, invoicePath, order) => {
   try {
 
@@ -19,7 +21,6 @@ export const sendInvoiceMail = async (email, invoicePath, order) => {
       day: "2-digit", month: "long", year: "numeric"
     });
 
-    /* ── ITEMS ROWS ── */
     const itemsHTML = items.map((item) => `
       <tr>
         <td style="padding:14px 16px;border-bottom:1px solid #f1f5f9;vertical-align:middle;">
@@ -48,7 +49,6 @@ export const sendInvoiceMail = async (email, invoicePath, order) => {
       </tr>
     `).join("");
 
-    /* ── HTML TEMPLATE ── */
     const htmlTemplate = `
 <!DOCTYPE html>
 <html lang="en">
@@ -164,7 +164,6 @@ export const sendInvoiceMail = async (email, invoicePath, order) => {
 </html>
     `;
 
-    /* ── ATTACH & SEND ── */
     const pdfBuffer = fs.readFileSync(invoicePath);
     const pdfBase64 = pdfBuffer.toString("base64");
 

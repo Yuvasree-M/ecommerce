@@ -1,16 +1,12 @@
 import { db } from "../config/firebase.js";
 
-  // Helper: Safe Date Conversion
-
 const getDate = (value) => {
   if (!value) return new Date(0);
   if (typeof value.toDate === "function") return value.toDate();
   return new Date(value);
 };
 
-
- //  Admin → Get All Transactions
-
+// Get all transactions 
 export const getAllTransactions = async (req, res) => {
   try {
     console.log("Admin fetching all transactions");
@@ -31,7 +27,8 @@ export const getAllTransactions = async (req, res) => {
   }
 };
 
-   //User → Get Their Transactions
+
+// Get transactions for logged-in user
 
 export const getUserTransactions = async (req, res) => {
   try {

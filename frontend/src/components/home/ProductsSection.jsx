@@ -59,35 +59,36 @@ const ProductsSection = () => {
     <div className="max-w-7xl mx-auto py-20 px-6 relative">
       <ToastContainer position="top-right" autoClose={3000} />
 
-      {/* ── SECTION HEADER ── */}
       <div className="text-center mb-14">
-        <h2 className="text-4xl font-bold text-green-800">
-          Our Products
-        </h2>
+        <h2 className="text-4xl font-bold text-green-800">Our Products</h2>
       </div>
 
-      {/* ── PRODUCT GRID ── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
         {products.map((p, index) => (
           <div
             key={p._id || index}
             className="bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-2xl overflow-hidden group hover:border-green-300 dark:hover:border-green-700 hover:shadow-lg hover:shadow-green-50 transition-all duration-300"
           >
-            {/* IMAGE */}
             <div className="relative overflow-hidden">
               <img
                 src={p.image}
                 alt={p.name}
                 className="h-48 w-full object-cover group-hover:scale-105 transition-transform duration-500"
               />
+
               {p.category && (
                 <span className="absolute top-3 left-3 bg-white/90 dark:bg-gray-800/90 text-green-700 dark:text-green-400 text-xs font-semibold px-2.5 py-1 rounded-full border border-green-200 dark:border-green-700 backdrop-blur-sm">
                   {p.category}
                 </span>
               )}
+
+              {p.quantity && (
+                <span className="absolute top-3 right-3 bg-green-700/90 text-white text-xs font-semibold px-2.5 py-1 rounded-full border border-green-600 backdrop-blur-sm">
+                  {p.quantity}
+                </span>
+              )}
             </div>
 
-            {/* CONTENT */}
             <div className="p-4">
               <h3 className="font-semibold text-gray-900 dark:text-gray-100 text-base truncate mb-1">
                 {p.name}
@@ -97,7 +98,7 @@ const ProductsSection = () => {
                   {p.description}
                 </p>
               )}
-              <p className="text-green-700 dark:text-green-400 font-bold text-xl mb-4">
+              <p className="text-green-700 dark:text-green-400 font-bold text-xl mb-1">
                 ₹{p.price}
               </p>
 
@@ -123,14 +124,22 @@ const ProductsSection = () => {
           </div>
         ))}
       </div>
-
-      {/* ── LOGIN MODAL ── */}
       {showLoginModal && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm z-50">
           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border-2 border-gray-100 dark:border-gray-700 p-6 w-80 text-center">
             <div className="w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-4 border-2 border-green-200 dark:border-green-800">
-              <svg className="w-5 h-5 text-green-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              <svg
+                className="w-5 h-5 text-green-700"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                />
               </svg>
             </div>
             <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-1">

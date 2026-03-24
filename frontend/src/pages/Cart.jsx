@@ -14,10 +14,8 @@ const Cart = () => {
   const { cart, setCart } = useContext(CartContext);
   const navigate = useNavigate();
 
-  /* ── CONFIRM MODAL STATE ── */
-  const [confirmItem, setConfirmItem] = useState(null); // { id, name, image }
+  const [confirmItem, setConfirmItem] = useState(null); 
 
-  /* ── REMOVE ── */
   const handleRemove = async (id) => {
     const prev = cart;
     setCart(c => c.filter(i => i.id !== id));
@@ -29,7 +27,6 @@ const Cart = () => {
     }
   };
 
-  /* ── UPDATE QTY ── */
   const updateQuantity = async (id, quantity) => {
     if (quantity < 1) return;
     const prev = cart;
@@ -44,13 +41,12 @@ const Cart = () => {
     }
   };
 
-  /* ── CHECKOUT ── */
   const handleCheckout = () => {
     if (!token) return alert("Login to checkout");
     navigate("/checkout");
   };
 
-  /* ── TOTALS ── */
+
   const totalPrice = useMemo(
     () => cart.reduce((s, i) => s + i.price * i.quantity, 0), [cart]
   );
@@ -58,7 +54,7 @@ const Cart = () => {
     () => cart.reduce((s, i) => s + i.quantity, 0), [cart]
   );
 
-  /* ── EMPTY STATE ── */
+
   if (cart.length === 0) return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-white flex flex-col items-center justify-center gap-5 px-4 pt-20">
       <div className="relative">
@@ -83,12 +79,8 @@ const Cart = () => {
     </div>
   );
 
-  /* ── MAIN CART ── */
   return (
     <>
-      {/* ══════════════════════════════
-          CONFIRM REMOVE MODAL
-      ══════════════════════════════ */}
       {confirmItem && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4"
@@ -101,7 +93,6 @@ const Cart = () => {
           >
             <style>{`@keyframes modalIn{from{opacity:0;transform:scale(0.94)}to{opacity:1;transform:scale(1)}}`}</style>
 
-            {/* Modal Header */}
             <div className="bg-red-50 border-b border-red-100 px-5 py-4 flex items-center gap-3">
               <div className="w-9 h-9 rounded-xl bg-red-100 flex items-center justify-center flex-shrink-0">
                 <FaExclamationTriangle className="text-red-500 text-sm" />
@@ -112,7 +103,6 @@ const Cart = () => {
               </div>
             </div>
 
-            {/* Product Preview */}
             <div className="px-5 py-4 flex items-center gap-3 border-b border-gray-50">
               <img
                 src={confirmItem.image}
@@ -122,7 +112,6 @@ const Cart = () => {
               <p className="text-sm font-semibold text-gray-800 leading-snug">{confirmItem.name}</p>
             </div>
 
-            {/* Actions */}
             <div className="px-5 py-4 flex gap-3">
               <button
                 onClick={() => setConfirmItem(null)}
@@ -141,13 +130,9 @@ const Cart = () => {
         </div>
       )}
 
-      {/* ══════════════════════════════
-          CART PAGE
-      ══════════════════════════════ */}
       <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-emerald-50 pt-20 pb-16 px-4">
         <div className="max-w-6xl mx-auto">
 
-          {/* ── PAGE HEADER ── */}
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-green-600 flex items-center justify-center shadow-md shadow-green-200">
@@ -170,10 +155,8 @@ const Cart = () => {
 
           <div className="grid lg:grid-cols-5 gap-6 items-start">
 
-            {/* ══ LEFT: ITEMS LIST ══ */}
             <div className="lg:col-span-3 space-y-3">
 
-              {/* Column headers */}
               <div className="hidden sm:grid grid-cols-12 text-xs font-bold text-gray-400 uppercase tracking-widest px-4 pb-1">
                 <span className="col-span-6">Product</span>
                 <span className="col-span-3 text-center">Quantity</span>
@@ -191,7 +174,7 @@ const Cart = () => {
 
                   <div className="p-4 grid grid-cols-1 sm:grid-cols-12 gap-4 items-center">
 
-                    {/* Image + Name */}
+       
                     <div className="sm:col-span-6 flex items-center gap-4">
                       <div className="relative flex-shrink-0">
                         <img
@@ -210,7 +193,7 @@ const Cart = () => {
                       </div>
                     </div>
 
-                    {/* Qty control */}
+       
                     <div className="sm:col-span-3 flex items-center justify-start sm:justify-center">
                       <div className="flex items-center border border-green-200 rounded-xl overflow-hidden bg-green-50">
                         <button
@@ -231,7 +214,7 @@ const Cart = () => {
                       </div>
                     </div>
 
-                    {/* Subtotal */}
+
                     <div className="sm:col-span-2 text-left sm:text-right">
                       <p className="text-base font-extrabold text-gray-900">
                         ₹{item.price * item.quantity}
@@ -243,7 +226,7 @@ const Cart = () => {
                       )}
                     </div>
 
-                    {/* Remove — now triggers modal */}
+ 
                     <div className="sm:col-span-1 flex sm:justify-end">
                       <button
                         onClick={() => setConfirmItem({ id: item.id, name: item.name, image: item.image })}
@@ -259,7 +242,6 @@ const Cart = () => {
                 </div>
               ))}
 
-              {/* Mobile continue shopping */}
               <button
                 onClick={() => navigate("/products")}
                 className="sm:hidden w-full text-center text-sm text-green-600 font-semibold py-3"
@@ -269,7 +251,6 @@ const Cart = () => {
 
             </div>
 
-            {/* ══ RIGHT: ORDER SUMMARY ══ */}
             <div className="lg:col-span-2 sticky top-24 space-y-3">
 
               <div className="bg-white rounded-2xl border border-green-100 shadow-sm overflow-hidden">
@@ -318,7 +299,7 @@ const Cart = () => {
                 </div>
               </div>
 
-              {/* Trust Badges */}
+
               <div className="bg-white rounded-2xl border border-green-100 shadow-sm p-4">
                 <div className="space-y-2.5">
                   {[

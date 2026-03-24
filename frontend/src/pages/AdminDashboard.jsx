@@ -134,7 +134,6 @@ const AdminDashboard = () => {
     <div className="min-h-screen bg-green-50 pt-24 pb-16 px-4 md:px-6">
       <div className="max-w-7xl mx-auto space-y-6">
 
-        {/* ── TOP BAR ── */}
         <div className="flex items-start justify-between">
           <div>
               <h2 className="text-3xl font-bold mb-6 text-green-800 dark:text-gray-100">
@@ -151,7 +150,6 @@ const AdminDashboard = () => {
           </button>
         </div>
 
-        {/* ── STAT CARDS — white with green border ── */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
           {[
             { label: "Admins",       value: adminCount,          accent: "border-t-4 border-t-green-800",   val: "text-green-800" },
@@ -170,8 +168,6 @@ const AdminDashboard = () => {
             </div>
           ))}
         </div>
-
-        {/* ── ORDER STATUS SUMMARY ── */}
         <div className="bg-white border border-green-200 rounded-xl px-5 py-3 flex flex-wrap items-center gap-3 shadow-sm">
           <span className="text-xs font-extrabold text-white bg-green-700 px-3 py-1 rounded-full uppercase tracking-wider">
             Order Breakdown
@@ -190,7 +186,6 @@ const AdminDashboard = () => {
           })}
         </div>
 
-        {/* ── TABS ── */}
         <div className="flex gap-2">
           {[
             { id: "orders",       label: "📦 Orders"      },
@@ -210,10 +205,8 @@ const AdminDashboard = () => {
           ))}
         </div>
 
-        {/* ══ ORDERS TABLE ══ */}
         {activeTab === "orders" && (
           <div className="space-y-3">
-            {/* Toolbar */}
             <div className="flex flex-wrap gap-3 items-center">
               <input
                 placeholder="Search order ID or customer…"
@@ -236,7 +229,6 @@ const AdminDashboard = () => {
               </span>
             </div>
 
-            {/* Table */}
             <div className="bg-white border border-green-200 rounded-xl overflow-hidden shadow-sm">
               <table className="w-full">
                 <thead className="bg-green-800 text-green-100">
@@ -308,7 +300,6 @@ const AdminDashboard = () => {
           </div>
         )}
 
-        {/* ══ TRANSACTIONS TABLE ══ */}
         {activeTab === "transactions" && (
           <div className="space-y-3">
             <div className="bg-white border border-green-200 rounded-xl overflow-hidden shadow-sm">
@@ -378,8 +369,6 @@ const AdminDashboard = () => {
         )}
 
       </div>
-
-      {/* ══ MODAL ══ */}
       {modal && (
         <DetailModal
           modal={modal}
@@ -393,9 +382,7 @@ const AdminDashboard = () => {
   );
 };
 
-/* ══════════════════════════════════════════════════════
-   PAGINATION
-══════════════════════════════════════════════════════ */
+
 const Pagination = ({ page, total, onChange, count }) => {
   if (total <= 1) return null;
 
@@ -452,9 +439,6 @@ const Pagination = ({ page, total, onChange, count }) => {
   );
 };
 
-/* ══════════════════════════════════════════════════════
-   DETAIL MODAL
-══════════════════════════════════════════════════════ */
 const DetailModal = ({ modal, onClose, getUserName, updateStatus, updatingId }) => {
   const { type, data } = modal;
   const isOrder = type === "order";
@@ -472,7 +456,6 @@ const DetailModal = ({ modal, onClose, getUserName, updateStatus, updatingId }) 
       >
         <style>{`@keyframes modalIn{from{opacity:0;transform:scale(0.95)}to{opacity:1;transform:scale(1)}}`}</style>
 
-        {/* Modal Header */}
         <div className="sticky top-0 bg-white z-10 flex items-center justify-between px-5 py-4 border-b border-gray-100">
           <div className="flex items-center gap-3">
             <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg ${isOrder ? "bg-orange-50" : "bg-purple-50"}`}>
@@ -493,7 +476,6 @@ const DetailModal = ({ modal, onClose, getUserName, updateStatus, updatingId }) 
           </button>
         </div>
 
-        {/* Status Banner */}
         <div className={`flex items-center gap-2 px-5 py-2.5 border-b border-gray-100 ${cfg.bg}`}>
           <span className={`w-2 h-2 rounded-full ${cfg.dot}`} />
           <span className={`text-xs font-bold ${cfg.text}`}>{cfg.label}</span>
@@ -501,7 +483,6 @@ const DetailModal = ({ modal, onClose, getUserName, updateStatus, updatingId }) 
 
         <div className="p-5 space-y-4">
 
-          {/* ORDER BODY */}
           {isOrder && (
             <>
               <div className="grid grid-cols-2 gap-3">
@@ -562,7 +543,6 @@ const DetailModal = ({ modal, onClose, getUserName, updateStatus, updatingId }) 
             </>
           )}
 
-          {/* TRANSACTION BODY */}
           {!isOrder && (
             <div className="grid grid-cols-2 gap-3">
               {[

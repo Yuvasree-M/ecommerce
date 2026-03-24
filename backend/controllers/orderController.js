@@ -68,7 +68,7 @@ export const placeOrder = async (req, res) => {
 
     await db.collection("carts").doc(userId).set({ items: [] });
 
-    // Send invoice email — non-blocking
+ 
     const savedOrder = {
       name: userName,
       email: userEmail,
@@ -182,7 +182,7 @@ export const updateOrderStatus = async (req, res) => {
   }
 };
 
-// Soft delete orders (user hides)
+// Soft delete orders 
 export const softDeleteOrders = async (req, res) => {
   try {
     const snapshot = await db.collection("orders")

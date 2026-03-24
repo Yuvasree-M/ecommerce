@@ -14,14 +14,11 @@ import { checkAdmin } from "../middleware/roleMiddleware.js";
 
 const router = express.Router();
 
-// Multer setup for image upload
 const upload = multer({ dest: "uploads/" });
 
-// Public routes
 router.get("/", getAllProducts);
 router.get("/:id", getProductById);
 
-// Admin-only routes
 router.post("/", verifyToken, attachUser, checkAdmin, upload.single("image"), createProduct);
 router.put("/:id", verifyToken, attachUser, checkAdmin, upload.single("image"), updateProduct);
 router.delete("/:id", verifyToken, attachUser, checkAdmin, deleteProduct);

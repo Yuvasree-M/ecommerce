@@ -1,5 +1,6 @@
 import Hero from "../components/home/Hero";
 import About from "../components/home/About";
+import WhyChooseUs from "../components/home/WhyChooseUs";
 import ProductsSection from "../components/home/ProductsSection";
 import FAQ from "../components/home/FAQ";
 import Contact from "../components/home/Contact";
@@ -8,33 +9,25 @@ import Footer from "../components/home/Footer";
 const Home = () => {
   return (
     <div className="scroll-smooth">
-
-      {/* Hero Section */}
-      <section id="home" className="min-h-screen bg-[#c8e6c9] dark:bg-gray-900">
+      <section id="home" className="min-h-screen bg-[#c8e6c9]">
         <Hero />
       </section>
-
-      {/* About Section */}
-      <section id="about" className="bg-[#d4edc1] dark:bg-gray-900">
+      <section id="about" className="bg-[#d4edc1]">
         <About />
       </section>
-
-      {/* Products Section */}
-      <section id="products" className="bg-[#e0f2d9] dark:bg-gray-800">
+      <section id="why-choose-us" className="bg-[#e0f2d9]">
+        <WhyChooseUs />
+      </section>
+      <section id="products" className="bg-[#f0f9e8]">
         <ProductsSection />
       </section>
 
-      {/* FAQ Section */}
-      <section id="faq" className="bg-[#d4edc1]  dark:bg-gray-900">
+      <section id="faq" className="bg-[#d4edc1]">
         <FAQ />
       </section>
-
-      {/* Contact Section */}
-      <section id="contact" className="bg-[#f0f9e8]  dark:bg-gray-900">
+      <section id="contact" className="bg-[#e0f2d9]">
         <Contact />
       </section>
-
-      {/* Footer */}
       <Footer />
 
     </div>

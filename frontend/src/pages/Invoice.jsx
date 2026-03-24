@@ -21,7 +21,6 @@ const Invoice = () => {
   const [loading,     setLoading]     = useState(!location.state?.order);
   const [downloading, setDownloading] = useState(false);
 
-  /* ── FETCH ORDER ── */
   useEffect(() => {
     if (order) return;
     const fetchOrder = async () => {
@@ -39,7 +38,6 @@ const Invoice = () => {
     if (token) fetchOrder();
   }, [id, token, order]);
 
-  /* ── DOWNLOAD PDF ── */
   const downloadInvoice = async () => {
     try {
       setDownloading(true);
@@ -64,8 +62,6 @@ const Invoice = () => {
       setDownloading(false);
     }
   };
-
-  /* ── LOADING ── */
   if (loading) return (
     <div className="flex flex-col items-center justify-center h-[70vh] gap-4">
       <div className="w-10 h-10 border-4 border-green-100 border-t-green-600 rounded-full animate-spin" />
@@ -90,7 +86,6 @@ const Invoice = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-green-100 to-slate-50 px-4 pt-24 pb-16">
 
-      {/* ── BACK ── */}
       <button
         onClick={() => navigate("/products")}
         className="flex items-center gap-2 text-green-700 hover:text-green-900 font-semibold text-sm mb-5 max-w-3xl mx-auto bg-transparent border-none cursor-pointer transition-colors"
@@ -99,17 +94,15 @@ const Invoice = () => {
         Back to Products
       </button>
 
-      {/* ── CARD ── */}
       <div className="max-w-3xl mx-auto bg-white rounded-2xl shadow-xl overflow-hidden">
 
-        {/* ── GREEN BAND ── */}
         <div className="bg-gradient-to-r from-green-600 to-green-700 px-6 py-5 flex items-center justify-between">
           <div>
             <p className="text-white text-xl font-bold leading-tight">Verdura</p>
             <p className="text-green-200 text-xs mt-0.5">Organic Grocery Store</p>
           </div>
           <div className="flex items-center gap-2.5">
-            {/* Cancel */}
+
             <button
               onClick={() => navigate("/orders")}
               className="flex items-center gap-1.5 text-white text-xs font-semibold px-3 py-2 rounded-lg border border-white/30 bg-white/10 hover:bg-white/20 transition-all"
@@ -117,7 +110,7 @@ const Invoice = () => {
               <FaTimes className="text-xs" />
               Cancel
             </button>
-            {/* Download */}
+  
             <button
               onClick={downloadInvoice}
               disabled={downloading}
@@ -129,7 +122,7 @@ const Invoice = () => {
           </div>
         </div>
 
-        {/* ── TITLE ROW ── */}
+     
         <div className="flex items-start justify-between px-6 pt-6 pb-0">
           <div>
             <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-800">
@@ -144,10 +137,10 @@ const Invoice = () => {
           </span>
         </div>
 
-        {/* ── DIVIDER ── */}
+     
         <div className="mx-6 my-5 h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent" />
 
-        {/* ── INFO GRID ── */}
+ 
         <div className="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-gray-100 px-6 pb-6">
           <div className="pb-4 sm:pb-0 sm:pr-5">
             <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Customer</p>
@@ -168,7 +161,6 @@ const Invoice = () => {
           </div>
         </div>
 
-        {/* ── ITEMS TABLE ── */}
         <div className="mx-6 border border-gray-200 rounded-xl overflow-hidden mb-6">
           <table className="w-full">
             <thead className="bg-gray-50 border-b border-gray-200">
@@ -211,7 +203,6 @@ const Invoice = () => {
           </table>
         </div>
 
-        {/* ── TOTALS ── */}
         <div className="flex justify-end px-6 mb-6">
           <div className="w-56 bg-gray-50 border border-gray-200 rounded-xl p-4 space-y-2.5">
             <div className="flex justify-between text-sm">
@@ -230,7 +221,6 @@ const Invoice = () => {
           </div>
         </div>
 
-        {/* ── FOOTER ACTIONS ── */}
         <div className="flex justify-end px-6 pb-6">
           <button
             onClick={() => navigate("/products")}
@@ -240,8 +230,6 @@ const Invoice = () => {
             Continue Shopping
           </button>
         </div>
-
-        {/* ── BOTTOM NOTE ── */}
         <p className="text-center text-xs text-gray-400 pb-5 px-6">
           A copy of this invoice has been sent to <strong className="text-gray-600">{order.email}</strong>
         </p>

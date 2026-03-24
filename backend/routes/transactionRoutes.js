@@ -10,10 +10,8 @@ import { checkAdmin } from "../middleware/roleMiddleware.js";
 
 const router = express.Router();
 
-/* USER ROUTE */
 router.get("/me", verifyToken, attachUser, getUserTransactions);
 
-/* ADMIN ROUTE */
 router.get("/", verifyToken, attachUser, checkAdmin, getAllTransactions);
 
 export default router;

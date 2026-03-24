@@ -1,5 +1,7 @@
 import { db } from "../config/firebase.js";
 
+
+// Get all users (admin only)
 export const getAllUsers = async (req, res) => {
   try {
     const snapshot = await db.collection("users").get();
@@ -11,6 +13,8 @@ export const getAllUsers = async (req, res) => {
   }
 };
 
+
+// Get user profile
 export const getUserProfile = async (req, res) => {
   try {
     const uid = req.user.uid;

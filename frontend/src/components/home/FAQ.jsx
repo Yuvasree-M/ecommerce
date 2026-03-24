@@ -49,7 +49,6 @@ const FAQ = () => {
                 isFirst ? "rounded-t-2xl" : ""
               } ${isLast ? "rounded-b-2xl" : ""} transition`}
             >
-              {/* Question */}
               <button
                 onClick={() => toggleFAQ(index)}
                 className="w-full p-4 flex justify-between items-center text-left focus:outline-none hover:bg-green-100 dark:hover:bg-gray-600 transition"
@@ -65,8 +64,6 @@ const FAQ = () => {
                   ▼
                 </span>
               </button>
-
-              {/* Answer */}
               <div
                 className={`px-4 pb-4 text-black-800 dark:text-gray-300 transition-all duration-300 ease-in-out overflow-hidden ${
                   isOpen ? "max-h-96 block" : "max-h-0 hidden"

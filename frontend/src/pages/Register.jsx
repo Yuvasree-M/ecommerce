@@ -54,7 +54,7 @@ const Register = () => {
         },
       });
 
-      await signOut(auth); // immediately sign out — isLoggedIn stays false
+      await signOut(auth); 
       setSuccess("Registration successful! Please login.");
       setTimeout(() => navigate("/login", { replace: true }), 2000);
     } catch (error) {
@@ -78,7 +78,6 @@ const Register = () => {
           <div className="bg-red-100 text-red-600 px-4 py-2 rounded text-sm">{errors.general}</div>
         )}
 
-        {/* Name */}
         <div className="flex items-center border border-gray-300 rounded-lg px-3 py-2">
           <FaUser className="text-green-600 mr-2" />
           <input type="text" placeholder="Full Name" value={name}
@@ -86,7 +85,6 @@ const Register = () => {
         </div>
         {errors.name && <p className="text-red-600 text-sm">{errors.name}</p>}
 
-        {/* Phone */}
         <div className="flex items-center border border-gray-300 rounded-lg px-3 py-2">
           <FaPhone className="text-green-600 mr-2" />
           <input type="text" placeholder="Phone Number" value={phone}
@@ -94,7 +92,6 @@ const Register = () => {
         </div>
         {errors.phone && <p className="text-red-600 text-sm">{errors.phone}</p>}
 
-        {/* Address */}
         <div className="flex items-center border border-gray-300 rounded-lg px-3 py-2">
           <FaMapMarkerAlt className="text-green-600 mr-2" />
           <input type="text" placeholder="Address" value={address}
@@ -102,7 +99,6 @@ const Register = () => {
         </div>
         {errors.address && <p className="text-red-600 text-sm">{errors.address}</p>}
 
-        {/* Email */}
         <div className="flex items-center border border-gray-300 rounded-lg px-3 py-2">
           <FaEnvelope className="text-green-600 mr-2" />
           <input type="text" placeholder="Email" value={email}
@@ -110,7 +106,6 @@ const Register = () => {
         </div>
         {errors.email && <p className="text-red-600 text-sm">{errors.email}</p>}
 
-        {/* Password */}
         <div className="flex items-center border border-gray-300 rounded-lg px-3 py-2">
           <FaLock className="text-green-600 mr-2" />
           <input type={showPassword ? "text" : "password"} placeholder="Password" value={password}
@@ -121,7 +116,6 @@ const Register = () => {
         </div>
         {errors.password && <p className="text-red-600 text-sm">{errors.password}</p>}
 
-        {/* Confirm Password */}
         <div className="flex items-center border border-gray-300 rounded-lg px-3 py-2">
           <FaLock className="text-green-600 mr-2" />
           <input type={showConfirm ? "text" : "password"} placeholder="Confirm Password" value={confirmPassword}
@@ -132,7 +126,6 @@ const Register = () => {
         </div>
         {errors.confirmPassword && <p className="text-red-600 text-sm">{errors.confirmPassword}</p>}
 
-        {/* Register Button */}
         <div className="flex justify-center">
           <button type="submit" disabled={loading}
             className="w-[120px] bg-green-700 text-white py-2 rounded-md hover:bg-green-600">

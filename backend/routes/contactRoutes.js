@@ -19,12 +19,10 @@ router.post("/", async (req, res) => {
   }
 
   try {
-    // Set API key fresh on each request
     const defaultClient = SibApiV3Sdk.ApiClient.instance;
     defaultClient.authentications["api-key"].apiKey = apiKey;
     const apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
 
-    // Email to Admin
     const adminMail = new SibApiV3Sdk.SendSmtpEmail();
     adminMail.subject = `Contact Request from ${name} - Verdura`;
     adminMail.sender = { name: "Verdura Contact", email: process.env.ADMIN_EMAIL };
@@ -52,7 +50,6 @@ router.post("/", async (req, res) => {
     `;
     await apiInstance.sendTransacEmail(adminMail);
 
-    // Auto Reply to User
     const userMail = new SibApiV3Sdk.SendSmtpEmail();
     userMail.subject = "Thank you for contacting Verdura";
     userMail.sender = { name: "Verdura Support", email: process.env.ADMIN_EMAIL };

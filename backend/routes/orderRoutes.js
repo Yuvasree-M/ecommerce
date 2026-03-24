@@ -17,18 +17,13 @@ const router = express.Router();
 
 router.use(verifyToken, attachUser);
 
-/* USER ROUTES */
-
 router.post("/", placeOrder);
 router.get("/", getOrders);
 router.delete("/soft-delete", softDeleteOrders);
 
-/* ADMIN ROUTES */
 
 router.get("/all", checkAdmin, getAllOrders);
 router.patch("/:id/status", checkAdmin, updateOrderStatus);
-
-/* ORDER BY ID (KEEP LAST) */
 
 router.get("/:id", getOrderById);
 

@@ -69,6 +69,8 @@ export const removeFromCart = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
+
+// Clear cart
 export const clearCart = async (req, res) => {
   try {
     const userId = req.user.uid;

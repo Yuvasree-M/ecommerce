@@ -10,7 +10,6 @@ export const CartProvider = ({ children }) => {
   const [cart, setCart] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  /* ---------------- FETCH CART ---------------- */
 
   const fetchCart = async () => {
     if (!token) return;
@@ -32,11 +31,9 @@ export const CartProvider = ({ children }) => {
     fetchCart();
   }, [token]);
 
-  /* ---------------- CART COUNT ---------------- */
 
  const cartCount = useMemo(() => cart.length, [cart]);
 
-  /* ---------------- TOTAL PRICE ---------------- */
 
   const totalPrice = useMemo(() => {
     return cart.reduce(
@@ -45,7 +42,6 @@ export const CartProvider = ({ children }) => {
     );
   }, [cart]);
 
-  /* ---------------- ADD TO CART ---------------- */
 
   const addToCart = async (product, quantity = 1) => {
     if (!token) return;
@@ -83,7 +79,6 @@ export const CartProvider = ({ children }) => {
     }
   };
 
-  /* ---------------- REMOVE FROM CART ---------------- */
 
   const removeFromCart = async (productId) => {
     if (!token) return;
@@ -101,8 +96,6 @@ export const CartProvider = ({ children }) => {
       setCart(previousCart);
     }
   };
-
-  /* ---------------- UPDATE QUANTITY ---------------- */
 
   const updateQuantity = async (productId, quantity) => {
     if (!token || quantity < 1) return;
@@ -129,7 +122,6 @@ export const CartProvider = ({ children }) => {
     }
   };
 
-  /* ---------------- CLEAR CART ---------------- */
 
   const clearCart = async () => {
     if (!token) return;

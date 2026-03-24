@@ -1,6 +1,7 @@
 import PDFDocument from "pdfkit";
 import fs from "fs";
 
+// Generates a PDF invoice for the given order 
 export const generateInvoice = async (order, orderId, filePath) => {
   return new Promise((resolve, reject) => {
 
