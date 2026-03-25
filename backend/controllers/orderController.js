@@ -1,206 +1,3 @@
-// import { db } from "../config/firebase.js";
-// import { generateInvoice } from "../utils/generateInvoice.js";
-// import { sendInvoiceMail } from "../utils/sendInvoiceMail.js";
-// import path from "path";
-// import os from "os";
-
-// // Place order
-// export const placeOrder = async (req, res) => {
-//   try {
-//     const { cartItems, address, phone, paymentId, razorpayOrderId, name, email } = req.body;
-
-//     const userId = req.user.uid;
-//     let userName  = name  || req.user.name  || "";
-//     let userEmail = email || req.user.email || "";
-//     if (!userName || !userEmail) {
-//       const userDoc = await db.collection("users").doc(userId).get();
-//       if (userDoc.exists) {
-//         const userData = userDoc.data();
-//         userName  = userName  || userData.name  || "";
-//         userEmail = userEmail || userData.email || "";
-//       }
-//     }
-
-//     if (!cartItems || cartItems.length === 0)
-//       return res.status(400).json({ message: "Cart is empty" });
-
-//     const itemsWithDetails = await Promise.all(
-//       cartItems.map(async item => {
-//         const productDoc = await db.collection("products").doc(item.productId).get();
-//         if (!productDoc.exists) throw new Error("Product not found");
-//         const product = productDoc.data();
-//         return {
-//           productId: productDoc.id,
-//           name: product.name,
-//           image: product.image,
-//           price: product.price,
-//           quantity: item.quantity,
-//         };
-//       })
-//     );
-
-//     const totalAmount = itemsWithDetails.reduce((sum, i) => sum + i.price * i.quantity, 0);
-
-//     const orderRef = await db.collection("orders").add({
-//       userId,
-//       name: userName,
-//       email: userEmail,
-//       items: itemsWithDetails,
-//       totalAmount,
-//       address,
-//       phone,
-//       paymentId,
-//       razorpayOrderId,
-//       status: "ORDER_PLACED",
-//        discount: discount || 0,      // ✅ add this
-//   promoCode: promoCode || "",   // ✅ add this
-//       deletedByUser: false,
-//       createdAt: new Date(),
-//       updatedAt: new Date(),
-//     });
-
-//     await db.collection("transactions").add({
-//       userId,
-//       orderId: orderRef.id,
-//       transactionId: paymentId,
-//       transactionType: "ONLINE",
-//       transactionStatus: "SUCCESS",
-//       createdAt: new Date(),
-//     });
-
-//     await db.collection("carts").doc(userId).set({ items: [] });
-
- 
-//     const savedOrder = {
-//       name: userName,
-//       email: userEmail,
-//       items: itemsWithDetails,
-//       totalAmount,
-//       address,
-//       phone,
-//       status: "ORDER_PLACED",
-//        discount: discount || 0,      // ✅ add this
-//   promoCode: promoCode || "",   // ✅ add this
-//     };
-
-//     const invoicePath = path.join(os.tmpdir(), `invoice-${orderRef.id}.pdf`);
-
-//     generateInvoice(savedOrder, orderRef.id, invoicePath)
-//       .then(() => sendInvoiceMail(userEmail, invoicePath, savedOrder))
-//       .catch(err => console.error("Invoice email failed:", err));
-
-//     res.status(201).json({ message: "Order placed successfully", orderId: orderRef.id });
-
-//   } catch (err) {
-//     console.error(err);
-//     res.status(500).json({ message: err.message });
-//   }
-// };
-
-// // Get user orders
-// export const getOrders = async (req, res) => {
-//   try {
-//     const snapshot = await db.collection("orders")
-//       .where("userId", "==", req.user.uid)
-//       .get();
-//     const orders = snapshot.docs
-//       .map(doc => ({ id: doc.id, ...doc.data() }))
-//       .filter(order => !order.deletedByUser)
-//       .sort((a, b) => b.createdAt.toDate() - a.createdAt.toDate());
-//     res.json(orders);
-//   } catch (err) {
-//     console.error(err);
-//     res.status(500).json({ message: err.message });
-//   }
-// };
-
-// // Get order by ID
-// export const getOrderById = async (req, res) => {
-//   try {
-//     const { id } = req.params;
-//     const orderDoc = await db.collection("orders").doc(id).get();
-
-//     if (!orderDoc.exists)
-//       return res.status(404).json({ message: "Order not found" });
-
-//     const data = orderDoc.data();
-//     if (req.user.role !== "ADMIN" && data.userId !== req.user.uid)
-//       return res.status(403).json({ message: "Access denied" });
-
-//     const order = {
-//       id: orderDoc.id,
-//       userId: data.userId,
-//       name: data.name,
-//       email: data.email,
-//       phone: data.phone,
-//       address: data.address,
-//       totalAmount: data.totalAmount,
-//       items: data.items || [],
-//       status: data.status,
-//     };
-
-//     res.json(order);
-//   } catch (err) {
-//     console.error(err);
-//     res.status(500).json({ message: err.message });
-//   }
-// };
-
-// // Admin: get all orders
-// export const getAllOrders = async (req, res) => {
-//   try {
-//     const snapshot = await db.collection("orders").get();
-//     const orders = await Promise.all(snapshot.docs.map(async doc => {
-//       const data = doc.data();
-//       const userSnap = await db.collection("users").doc(data.userId).get();
-//       return {
-//         id: doc.id,
-//         ...data,
-//         userName: userSnap.exists ? userSnap.data().name : "Unknown",
-//       };
-//     }));
-//     orders.sort((a, b) => b.createdAt.toDate() - a.createdAt.toDate());
-//     res.json(orders);
-//   } catch (err) {
-//     console.error(err);
-//     res.status(500).json({ message: err.message });
-//   }
-// };
-
-// // Update order status
-// export const updateOrderStatus = async (req, res) => {
-//   try {
-//     const { status } = req.body;
-//     const allowed = ["ORDER_PLACED", "APPROVED", "SHIPPED", "DELIVERED", "REJECTED"];
-//     if (!allowed.includes(status))
-//       return res.status(400).json({ message: "Invalid status" });
-
-//     await db.collection("orders").doc(req.params.id).update({
-//       status,
-//       updatedAt: new Date(),
-//     });
-//     res.json({ message: "Order status updated" });
-//   } catch (err) {
-//     console.error(err);
-//     res.status(500).json({ message: err.message });
-//   }
-// };
-
-// // Soft delete orders 
-// export const softDeleteOrders = async (req, res) => {
-//   try {
-//     const snapshot = await db.collection("orders")
-//       .where("userId", "==", req.user.uid)
-//       .get();
-//     const batch = db.batch();
-//     snapshot.docs.forEach(doc => batch.update(doc.ref, { deletedByUser: true }));
-//     await batch.commit();
-//     res.json({ message: "Orders hidden successfully" });
-//   } catch (err) {
-//     console.error(err);
-//     res.status(500).json({ message: err.message });
-//   }
-// };
 import { db } from "../config/firebase.js";
 import Razorpay from "razorpay";
 import { generateInvoice } from "../utils/generateInvoice.js";
@@ -213,6 +10,7 @@ const razorpay = new Razorpay({
   key_secret: process.env.RAZORPAY_SECRET,
 });
 
+// place order
 export const placeOrder = async (req, res) => {
   try {
     const {
@@ -320,6 +118,8 @@ export const placeOrder = async (req, res) => {
 //     res.status(500).json({ message: err.message });
 //   }
 // };
+
+// Get Orders
 export const getOrders = async (req, res) => {
   try {
     const snapshot = await db.collection("orders")
@@ -350,6 +150,7 @@ export const getOrders = async (req, res) => {
   }
 };
 
+// Get order by ID
 export const getOrderById = async (req, res) => {
   try {
     const orderDoc = await db.collection("orders").doc(req.params.id).get();
@@ -374,6 +175,7 @@ export const getOrderById = async (req, res) => {
   }
 };
 
+// Get All orders (admin only)
 export const getAllOrders = async (req, res) => {
   try {
     const snapshot = await db.collection("orders").get();
@@ -395,6 +197,7 @@ export const getAllOrders = async (req, res) => {
   }
 };
 
+// Update order status (admin only)
 export const updateOrderStatus = async (req, res) => {
   try {
     const { status } = req.body;
@@ -429,6 +232,7 @@ export const updateOrderStatus = async (req, res) => {
   }
 };
 
+// Soft delete orders by user
 export const softDeleteOrders = async (req, res) => {
   try {
     const snapshot = await db.collection("orders")
@@ -482,7 +286,7 @@ export const cancelOrder = async (req, res) => {
   }
 };
 
-
+// Request return (customer)
 export const requestReturn = async (req, res) => {
   try {
     const { reason } = req.body;
@@ -535,6 +339,7 @@ export const requestReturn = async (req, res) => {
   }
 };
 
+// Approve refund (admin)
 export const approveRefund = async (req, res) => {
   try {
     const { refundNote } = req.body;
@@ -591,7 +396,7 @@ export const approveRefund = async (req, res) => {
   }
 };
 
-
+// Razorpay webhook to confirm refund success
 export const razorpayWebhook = async (req, res) => {
   try {
     const { createHmac } = await import("crypto");

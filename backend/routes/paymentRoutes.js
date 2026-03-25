@@ -7,7 +7,6 @@ import { attachUser } from "../middleware/attachUser.js";
 
 const router = express.Router();
 
-// ⚠️ Webhook (must be BEFORE express.json in app.js)
 router.post(
   "/webhook",
   express.raw({ type: "application/json" }),

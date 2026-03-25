@@ -4,7 +4,6 @@ export const attachUser = async (req, res, next) => {
   try {
     if (!req.user) return res.status(401).json({ message: "User not found" });
 
-    // FIX: req.body may be undefined
     const { phone = "", address = "" } = req.body || {};
 
     const userRef = db.collection("users").doc(req.user.uid);
