@@ -303,6 +303,23 @@ export const placeOrder = async (req, res) => {
   }
 };
 
+// export const getOrders = async (req, res) => {
+//   try {
+//     const snapshot = await db.collection("orders")
+//       .where("userId", "==", req.user.uid)
+//       .get();
+
+//     const orders = snapshot.docs
+//       .map(doc => ({ id: doc.id, ...doc.data() }))
+//       .filter(o => !o.deletedByUser)
+//       .sort((a, b) => b.createdAt.toDate() - a.createdAt.toDate());
+
+//     res.json(orders);
+//   } catch (err) {
+//     console.error(err);
+//     res.status(500).json({ message: err.message });
+//   }
+// };
 export const getOrders = async (req, res) => {
   try {
     const snapshot = await db.collection("orders")
@@ -310,9 +327,21 @@ export const getOrders = async (req, res) => {
       .get();
 
     const orders = snapshot.docs
-      .map(doc => ({ id: doc.id, ...doc.data() }))
+      .map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          ...data,
+          createdAt:          data.createdAt?.toDate?.()          || data.createdAt          || null,
+          updatedAt:          data.updatedAt?.toDate?.()          || data.updatedAt          || null,
+          deliveredAt:        data.deliveredAt?.toDate?.()        || data.deliveredAt        || null,
+          cancelledAt:        data.cancelledAt?.toDate?.()        || data.cancelledAt        || null,
+          returnRequestedAt:  data.returnRequestedAt?.toDate?.()  || data.returnRequestedAt  || null,
+          refundInitiatedAt:  data.refundInitiatedAt?.toDate?.()  || data.refundInitiatedAt  || null,
+        };
+      })
       .filter(o => !o.deletedByUser)
-      .sort((a, b) => b.createdAt.toDate() - a.createdAt.toDate());
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
     res.json(orders);
   } catch (err) {
