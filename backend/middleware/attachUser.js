@@ -1,17 +1,18 @@
 import { db } from "../config/firebase.js"; 
 
-// Middleware to attach user data to request
 export const attachUser = async (req, res, next) => {
   try {
     if (!req.user) return res.status(401).json({ message: "User not found" });
 
-    const { phone = "", address = "" } = req.body;
+    // FIX: req.body may be undefined
+    const { phone = "", address = "" } = req.body || {};
+
     const userRef = db.collection("users").doc(req.user.uid);
     const docSnap = await userRef.get();
 
     if (!docSnap.exists) {
       await userRef.set({
-        name: req.user.name || req.body.name || "",
+        name: req.user.name || req.body?.name || "",
         email: req.user.email,
         phone,
         address,
@@ -20,7 +21,10 @@ export const attachUser = async (req, res, next) => {
       });
     }
 
-    const userData = docSnap.exists ? docSnap.data() : { role: "USER", name: req.user.name };
+    const userData = docSnap.exists
+      ? docSnap.data()
+      : { role: "USER", name: req.user.name };
+
     req.user.role = userData.role || "USER";
     req.user.name = userData.name || req.user.name;
 

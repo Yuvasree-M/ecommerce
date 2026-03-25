@@ -100,15 +100,15 @@ export const saveOrder = async (req, res) => {
       updatedAt: new Date(),
     });
 
-    await db.collection("transactions").add({
-      userId,
-      orderId: orderRef.id,
-      transactionId: paymentId,
-      transactionType: "ONLINE",
-      transactionStatus: "SUCCESS",
-      createdAt: new Date(),
-    });
-
+   await db.collection("transactions").add({
+  userId,
+  orderId: orderRef.id,
+  transactionId: paymentId,
+  transactionType: "ONLINE",
+  transactionStatus: "SUCCESS",
+  amount: totalAmount,
+  createdAt: new Date(),
+});
     await db.collection("carts").doc(userId).set({ items: [] });
 
     const savedOrder = {

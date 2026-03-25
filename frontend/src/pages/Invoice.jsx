@@ -131,7 +131,6 @@ const Invoice = () => {
             <thead>
               <tr className="border-b">
                 <th className="text-left pb-2">Product</th>
-                <th className="text-center">Unit</th>
                 <th className="text-center">Qty</th>
                 <th className="text-right">Rate</th>
                 <th className="text-right">Total</th>
@@ -153,9 +152,7 @@ const Invoice = () => {
                       <span className="font-medium">{item.name}</span>
                     </td>
 
-                    <td className="text-center">
-                      {totalQty} {unitType} {/* e.g., 300 grams */}
-                    </td>
+          
 
                     <td className="text-center">
                       {item.quantity} {/* units */}

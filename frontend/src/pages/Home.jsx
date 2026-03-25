@@ -3,6 +3,7 @@ import About from "../components/home/About";
 import WhyChooseUs from "../components/home/WhyChooseUs";
 import ProductsSection from "../components/home/ProductsSection";
 import FAQ from "../components/home/FAQ";
+import Testimonials from "../components/home/Testimonials";
 import Contact from "../components/home/Contact";
 import Footer from "../components/home/Footer";
 
@@ -21,7 +22,9 @@ const Home = () => {
       <section id="products" className="bg-[#f0f9e8]">
         <ProductsSection />
       </section>
-
+<section id="testimonials" className="bg-[#e0f2d9]">
+  <Testimonials />
+</section>
       <section id="faq" className="bg-[#d4edc1]">
         <FAQ />
       </section>
