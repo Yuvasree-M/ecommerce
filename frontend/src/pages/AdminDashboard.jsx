@@ -106,9 +106,14 @@ const [feedback, setFeedback] = useState([]);
 
 const approveFeedback = async (id) => {
   await apiFetch(`/api/feedback/${id}/approve`, {
-    method: "PATCH",
+    method: "PATCH"
   });
+
+  setFeedback(prev =>
+    prev.map(f => f.id === id ? { ...f, approved: true } : f)
+  );
 };
+  // Forward status update
   const updateStatus = async (orderId, status) => {
     setUpdatingId(orderId);
     try {
