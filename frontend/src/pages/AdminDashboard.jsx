@@ -104,19 +104,11 @@ const [feedback, setFeedback] = useState([]);
     return transactions.slice(s, s + PER_PAGE);
   }, [transactions, txPage]);
 
-<<<<<<< HEAD
 const approveFeedback = async (id) => {
   await apiFetch(`/api/feedback/${id}/approve`, {
-    method: "PATCH"
+    method: "PATCH",
   });
-
-  setFeedback(prev =>
-    prev.map(f => f.id === id ? { ...f, approved: true } : f)
-  );
 };
-  // Forward status update
-=======
->>>>>>> 1af864bb834ed2fb2e3f831823ecf12d5815e2c1
   const updateStatus = async (orderId, status) => {
     setUpdatingId(orderId);
     try {
