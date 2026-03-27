@@ -232,7 +232,7 @@ export const updateOrderStatus = async (req, res) => {
   }
 };
 
-// Soft delete orders by user
+// Soft delete order
 export const softDeleteOrders = async (req, res) => {
   try {
     const snapshot = await db.collection("orders")
