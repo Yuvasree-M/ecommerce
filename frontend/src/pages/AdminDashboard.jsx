@@ -613,20 +613,22 @@ const AdminDashboard = () => {
   const [statusFilter,  setStatusFilter]  = useState("ALL");
   const [orderPage,     setOrderPage]     = useState(1);
   const [txPage,        setTxPage]        = useState(1);
-
+const [feedback, setFeedback] = useState([]);
   const loadAll = useCallback(async () => {
     setLoading(true);
     try {
-      const [u, o, p, t] = await Promise.all([
+      const [u, o, p, t,f] = await Promise.all([
         apiFetch("/api/users"),
-        apiFetch("/api/orders/all"),
-        apiFetch("/api/products"),
-        apiFetch("/api/transactions"),
+  apiFetch("/api/orders/all"),
+  apiFetch("/api/products"),
+  apiFetch("/api/transactions"),
+  apiFetch("/api/feedback/all"),   
       ]);
       setUsers(u || []);
       setOrders(o || []);
       setProductsCount((p || []).length);
       setTransactions(t || []);
+      setFeedback(f || []);
     } catch (err) {
       console.error("Dashboard load failed", err);
     } finally {
@@ -635,13 +637,7 @@ const AdminDashboard = () => {
   }, []);
 
   useEffect(() => { if (token) loadAll(); }, [token]);
-useEffect(() => {
-  const i = setInterval(() => {
-    if (token) loadAll();
-  }, 10000);
 
-  return () => clearInterval(i);
-}, [token]);
   const adminCount = useMemo(() => users.filter(u => u.role === "ADMIN").length, [users]);
   const userCount  = useMemo(() => users.filter(u => u.role === "USER").length,  [users]);
   const revenue    = useMemo(() =>
@@ -680,6 +676,15 @@ useEffect(() => {
     return transactions.slice(s, s + PER_PAGE);
   }, [transactions, txPage]);
 
+const approveFeedback = async (id) => {
+  await apiFetch(`/api/feedback/${id}/approve`, {
+    method: "PATCH"
+  });
+
+  setFeedback(prev =>
+    prev.map(f => f.id === id ? { ...f, approved: true } : f)
+  );
+};
   // Forward status update
   const updateStatus = async (orderId, status) => {
     setUpdatingId(orderId);
@@ -783,8 +788,9 @@ await loadAll();
         {/* Tabs */}
         <div className="flex gap-2">
           {[
-            { id: "orders",       label: "📦 Orders"       },
-            { id: "transactions", label: "💳 Transactions"  },
+            { id: "orders", label: "📦 Orders" },
+  { id: "transactions", label: "💳 Transactions" },
+  { id: "feedback", label: "⭐ Feedback" },   
           ].map(t => (
             <button
               key={t.id}
@@ -954,6 +960,75 @@ await loadAll();
           </div>
         )}
 
+{activeTab === "feedback" && (
+  <div className="bg-white border border-green-200 rounded-xl overflow-hidden shadow-sm">
+    <table className="w-full">
+      <thead className="bg-green-800 text-white">
+        <tr>
+          <th className="px-4 py-3 text-left text-xs">User</th>
+          <th className="px-4 py-3 text-left text-xs">Review</th>
+          <th className="px-4 py-3 text-left text-xs">Rating</th>
+          <th className="px-4 py-3 text-left text-xs">Status</th>
+          <th className="px-4 py-3 text-left text-xs">Action</th>
+        </tr>
+      </thead>
+
+   <tbody>
+  {feedback.map(f => (
+    <tr key={f.id} className="border-b hover:bg-gray-50">
+      
+      {/* User */}
+      <td className="px-4 py-3 font-semibold">
+        {f.userName}
+      </td>
+
+      {/* Rating */}
+      <td className="px-4 py-3">
+        <div className="flex">
+          {[1,2,3,4,5].map(i => (
+            <span key={i}>
+              {i <= f.rating ? "⭐" : "☆"}
+            </span>
+          ))}
+        </div>
+      </td>
+
+      {/* Message */}
+      <td className="px-4 py-3 text-sm text-gray-600 max-w-xs">
+        {f.reviewText}
+      </td>
+
+      {/* Status */}
+      <td className="px-4 py-3">
+        {f.approved ? (
+          <span className="text-green-600 font-bold">
+            Approved
+          </span>
+        ) : (
+          <span className="text-orange-500 font-bold">
+            Pending
+          </span>
+        )}
+      </td>
+
+      {/* Action */}
+      <td className="px-4 py-3">
+        {!f.approved && (
+          <button
+            onClick={() => approveFeedback(f.id)}
+            className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-lg text-sm"
+          >
+            Approve
+          </button>
+        )}
+      </td>
+
+    </tr>
+  ))}
+</tbody>
+    </table>
+  </div>
+)}
       </div>
 
       {modal && (

@@ -15,6 +15,7 @@ import paymentRoutes from "./routes/paymentRoutes.js";
 import transactionRoutes from "./routes/transactionRoutes.js";
 import contactRoutes from "./routes/contactRoutes.js";
 import invoiceRoutes from "./routes/invoiceRoutes.js";
+import feedbackRoutes from "./routes/feedbackRoutes.js";
 
 dotenv.config();
 
@@ -57,7 +58,7 @@ app.use("/api/payment", paymentRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/contact", contactRoutes);
 app.use("/api/invoice", invoiceRoutes);
-
+app.use("/api/feedback", feedbackRoutes);
 app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;

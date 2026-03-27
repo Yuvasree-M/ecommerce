@@ -28,6 +28,7 @@ const AllOrders = React.lazy(() => import("./pages/AllOrders"));
 const Login = React.lazy(() => import("./pages/Login"));
 const Register = React.lazy(() => import("./pages/Register"));
 const Contact = React.lazy(() => import("./components/home/Contact"));
+const Testimonials = React.lazy(() => import("./components/home/Testimonials"));
 
 /* -------- App -------- */
 
@@ -47,7 +48,8 @@ function App() {
           <Route path="/" element={<HomeRedirect />} />
 
           <Route path="/products" element={<ProductList />} />
-          <Route path="/contact" element={<Contact />} />
+            <Route path="/contact" element={<Contact />} />
+          <Route path="/testimonials" element={<Testimonials />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
 
