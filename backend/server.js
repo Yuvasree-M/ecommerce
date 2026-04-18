@@ -23,7 +23,7 @@ const app = express();
 app.use(cors({
   origin: [
     "http://localhost:5173",
-    "https://ecommerce-pi-nine-47.vercel.app"
+    "https://verdura-alpha.vercel.app"
   ],
   credentials: true
 }));
